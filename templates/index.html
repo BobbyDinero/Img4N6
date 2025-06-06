@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Threat Scanner Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+  </head>
+  <body>
+    <div class="matrix-bg" id="matrixBg"></div>
+
+    <div class="container">
+      <header class="header">
+        <h1>🛡️ IMAGE THREAT SCANNER</h1>
+        <p>Advanced Forensic Analysis & Steganography Detection System</p>
+      </header>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="totalScans">0</div>
+          <div class="stat-label">Total Scans</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="threatsFound">0</div>
+          <div class="stat-label">Threats Found</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="cleanFiles">0</div>
+          <div class="stat-label">Clean Files</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="detectionRate">0%</div>
+          <div class="stat-label">Detection Rate</div>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <div class="panel">
+          <h3>📁 Upload & Scan</h3>
+
+          <div class="analysis-options">
+            <div class="option-card selected" data-level="quick">
+              <div style="font-weight: bold; color: #00ff88">⚡ Quick</div>
+              <div style="font-size: 0.9rem; margin-top: 5px">Basic + YARA</div>
+            </div>
+            <div class="option-card" data-level="deep">
+              <div style="font-weight: bold; color: #ffaa00">🔍 Deep</div>
+              <div style="font-size: 0.9rem; margin-top: 5px">
+                + Statistical
+              </div>
+            </div>
+            <div class="option-card" data-level="ultra">
+              <div style="font-weight: bold; color: #ff4444">🚀 Ultra</div>
+              <div style="font-size: 0.9rem; margin-top: 5px">+ Advanced</div>
+            </div>
+          </div>
+
+          <div class="vt-config">
+            <label
+              style="
+                display: block;
+                margin-bottom: 5px;
+                color: #ccc;
+                font-size: 0.9rem;
+              "
+            >
+              🌐 VirusTotal API Key (Optional):
+            </label>
+            <input
+              type="password"
+              id="vtApiKey"
+              placeholder="Enter your VirusTotal API key for enhanced detection"
+            />
+          </div>
+
+          <div class="scan-area" id="scanArea">
+            <div style="font-size: 3rem; margin-bottom: 15px">📁</div>
+            <div style="font-size: 1.2rem; margin-bottom: 10px">
+              Enter folder path to scan
+            </div>
+            <div style="color: #888; font-size: 0.9rem; margin-bottom: 15px">
+              Files will be scanned in their original location (safer!)
+            </div>
+            <!-- This will be replaced by JavaScript -->
+          </div>
+
+          <div class="upload-options">
+            <!-- This will be replaced by JavaScript -->
+          </div>
+
+          <div class="progress-bar" id="progressBar" style="display: none">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+
+          <div class="loading" id="loading" style="display: none">
+            <div class="spinner"></div>
+            <div id="loadingText">Analyzing images for threats...</div>
+          </div>
+
+          <button class="scan-button" id="scanButton" disabled>
+            🔍 Start Analysis
+          </button>
+        </div>
+
+        <div class="panel">
+          <h3>📊 Scan Results</h3>
+          <div class="results-area" id="resultsArea">
+            <div style="text-align: center; color: #888; margin-top: 50px">
+              <div style="font-size: 2rem; margin-bottom: 10px">🕵️</div>
+              <div>Enter folder path to begin threat analysis</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <p>
+          Powered by Advanced ML Algorithms & Forensic Analysis | Real Python
+          Backend Integration
+        </p>
+      </footer>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  </body>
+</html>
