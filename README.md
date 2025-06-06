@@ -30,8 +30,8 @@ threat detection and comprehensive analysis capabilities.
 1. **Download and Extract**
 
    ```cmd
-   git clone https://github.com/yourusername/image-threat-scanner.git
-   cd image-threat-scanner
+   git clone https://github.com/BobbyDinero/IMG4N6.git
+   cd IMG4N6
    ```
 
 2. **Run Setup**
@@ -62,8 +62,8 @@ threat detection and comprehensive analysis capabilities.
 1. **Clone Repository**
 
    ```bash
-   git clone https://github.com/yourusername/image-threat-scanner.git
-   cd image-threat-scanner
+   git clone https://github.com/BobbyDinero/IMG4N6.git
+   cd IMG4N6
    ```
 
 2. **Create Virtual Environment**
@@ -159,7 +159,7 @@ The application includes built-in safety measures in `app.py`:
 ## 📁 Project Structure
 
 ```text
-image-threat-scanner/
+IMG4N6/
 ├── 📄 app.py                 # Main Flask application
 ├── 🔍 image_threat_scanner.py # Core scanning engine
 ├── ⚙️ config.py              # Configuration settings
@@ -277,7 +277,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ### Reporting Issues
 
-- Use the [GitHub Issues](https://github.com/yourusername/image-threat-scanner/issues) page
+- Use the [GitHub Issues](https://github.com/BobbyDinero/IMG4N6/issues) page
 - Include system information and error messages
 - Provide steps to reproduce the issue
 
@@ -308,8 +308,8 @@ Users are responsible for ensuring compliance with applicable laws and regulatio
 ## 📞 Support
 
 - 📧 Email: <your-email@domain.com>
-- 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/image-threat-scanner/discussions)
-- 🐛 Bug Reports: [GitHub Issues](https://github.com/yourusername/image-threat-scanner/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/BobbyDinero/IMG4N6/discussions)
+- 🐛 Bug Reports: [GitHub Issues](https://github.com/BobbyDinero/IMG4N6/issues)
 
 ---
 
