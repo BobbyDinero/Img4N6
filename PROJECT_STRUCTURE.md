@@ -228,6 +228,7 @@ pip install -r requirements-dev.txt
 When packaging for distribution, the structure should include:
 
 ### Minimal Distribution
+
 ```
 image-threat-scanner/
 ├── src/                    # Core application files
@@ -242,6 +243,7 @@ image-threat-scanner/
 ```
 
 ### Full Distribution
+
 - Include all files from the complete structure above
 - Suitable for developers and advanced users
 - Includes tests, documentation, and development tools
@@ -249,12 +251,14 @@ image-threat-scanner/
 ## 🔄 Maintenance
 
 ### Regular Updates Required
+
 - `requirements.txt` - Keep dependencies current
 - `rules.yar` - Update threat detection patterns
 - `CHANGELOG.md` - Document all changes
 - Documentation - Keep examples and guides current
 
 ### Automated Maintenance
+
 - GitHub Actions for testing and security scanning
 - Dependabot for dependency updates
 - Regular YARA rule updates from threat intelligence

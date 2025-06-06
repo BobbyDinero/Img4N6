@@ -1,4 +1,4 @@
-MIT License
+# MIT License
 
 Copyright (c) 2025 Image Threat Scanner Project
 
@@ -21,8 +21,4 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 DISCLAIMER:
-This software is intended for legitimate security research, educational 
-purposes, and forensic analysis only. Users are solely responsible for 
-ensuring compliance with all applicable laws and regulations in their 
-jurisdiction. The authors and contributors of this project disclaim any 
-responsibility for misuse of this software.
+This software is intended for legitimate security research, educational purposes, and forensic analysis only. Users are solely responsible for ensuring compliance with all applicable laws and regulations in their jurisdiction. The authors and contributors of this project disclaim any responsibility for misuse of this software.

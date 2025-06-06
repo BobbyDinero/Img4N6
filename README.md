@@ -9,7 +9,9 @@
 
 ## 📋 Overview
 
-Advanced forensic image analysis and steganography detection system with a modern web interface. Safely scan images in their original location without copying or moving files, featuring real-time threat detection and comprehensive analysis capabilities.
+Advanced forensic image analysis and steganography detection system with a modern web interface.
+Safely scan images in their original location without copying or moving files, featuring real-time
+threat detection and comprehensive analysis capabilities.
 
 ### ✨ Key Features
 
@@ -26,17 +28,20 @@ Advanced forensic image analysis and steganography detection system with a moder
 ### Windows (Recommended)
 
 1. **Download and Extract**
+
    ```cmd
    git clone https://github.com/yourusername/image-threat-scanner.git
    cd image-threat-scanner
    ```
 
 2. **Run Setup**
+
    ```cmd
    setup.bat
    ```
 
 3. **Start Application**
+
    ```cmd
    run_app.bat
    ```
@@ -47,6 +52,7 @@ Advanced forensic image analysis and steganography detection system with a moder
 ### Manual Installation
 
 #### Prerequisites
+
 - Python 3.8 or higher
 - Git (optional)
 - Windows OS (primary support)
@@ -54,17 +60,20 @@ Advanced forensic image analysis and steganography detection system with a moder
 #### Step-by-Step Setup
 
 1. **Clone Repository**
+
    ```bash
    git clone https://github.com/yourusername/image-threat-scanner.git
    cd image-threat-scanner
    ```
 
 2. **Create Virtual Environment**
+
    ```bash
    python -m venv venv
    ```
 
 3. **Activate Virtual Environment**
+
    ```bash
    # Windows
    venv\Scripts\activate
@@ -74,11 +83,13 @@ Advanced forensic image analysis and steganography detection system with a moder
    ```
 
 4. **Install Dependencies**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 5. **Run Application**
+
    ```bash
    python app.py
    ```
@@ -105,6 +116,7 @@ Advanced forensic image analysis and steganography detection system with a moder
 | **Ultra** | + ML + Advanced Steganalysis | Comprehensive | Sophisticated attacks |
 
 ### Supported File Types
+
 - JPEG/JPG
 - PNG
 - GIF
@@ -115,12 +127,15 @@ Advanced forensic image analysis and steganography detection system with a moder
 ## 🔧 Configuration
 
 ### VirusTotal Integration
+
 1. Sign up for a free [VirusTotal](https://www.virustotal.com/) account
 2. Get your API key from the dashboard
 3. Enter the key in the web interface for enhanced threat detection
 
 ### Custom YARA Rules
+
 Edit `rules.yar` to add custom detection patterns:
+
 ```yara
 rule Custom_Threat {
     meta:
@@ -133,7 +148,9 @@ rule Custom_Threat {
 ```
 
 ### Safety Configuration
+
 The application includes built-in safety measures in `app.py`:
+
 - **Allowed Drives**: C:, D:, E: (configurable)
 - **Blocked Paths**: System directories automatically blocked
 - **File Limits**: 1000 files per scan, 100MB max file size
@@ -141,7 +158,7 @@ The application includes built-in safety measures in `app.py`:
 
 ## 📁 Project Structure
 
-```
+```text
 image-threat-scanner/
 ├── 📄 app.py                 # Main Flask application
 ├── 🔍 image_threat_scanner.py # Core scanning engine
@@ -162,6 +179,7 @@ image-threat-scanner/
 ## 🔬 Detection Capabilities
 
 ### Threat Detection
+
 - **Embedded Executables** - PE/ELF headers in images
 - **Archive Files** - Hidden ZIP/RAR/7Z archives
 - **Script Injection** - JavaScript, PowerShell, CMD
@@ -169,6 +187,7 @@ image-threat-scanner/
 - **API Tokens** - Exposed credentials and keys
 
 ### Steganography Detection
+
 - **LSB (Least Significant Bit)** - Data hidden in pixel values
 - **DCT (Discrete Cosine Transform)** - JPEG coefficient manipulation
 - **Palette-based** - Index color steganography
@@ -176,6 +195,7 @@ image-threat-scanner/
 - **Statistical Analysis** - Entropy and distribution tests
 
 ### Advanced Analysis
+
 - **RS Steganalysis** - Industry-standard LSB detection
 - **Sample Pair Analysis** - Statistical steganography detection
 - **Machine Learning** - Anomaly pattern recognition
@@ -185,18 +205,21 @@ image-threat-scanner/
 ## 🛡️ Security Features
 
 ### Path Safety
+
 - Automatic validation of scan paths
 - System directory protection
 - Drive restriction enforcement
 - Path traversal prevention
 
 ### File Safety
+
 - Size limits to prevent memory issues
 - Extension validation
 - Timeout protection for scan operations
 - Error handling and graceful degradation
 
 ### Privacy Protection
+
 - No file copying or uploading
 - Local analysis only
 - Session-based temporary data
@@ -207,6 +230,7 @@ image-threat-scanner/
 ### Common Issues
 
 **"Python not found" Error**
+
 ```cmd
 # Download Python from python.org
 # Ensure "Add to PATH" is checked during installation
@@ -214,11 +238,13 @@ python --version
 ```
 
 **"Permission Denied" Error**
+
 - Run Command Prompt as Administrator
 - Ensure antivirus isn't blocking the application
 - Check folder permissions for target scan directory
 
 **"ModuleNotFoundError" for packages**
+
 ```cmd
 # Activate virtual environment first
 venv\Scripts\activate
@@ -226,11 +252,13 @@ pip install -r requirements.txt
 ```
 
 **YARA Rules Not Loading**
+
 - Ensure `rules.yar` exists in the application directory
 - Check YARA rule syntax if you've modified the file
 - Application will continue with reduced detection capability
 
 ### Performance Tips
+
 - **Quick scans** for routine checks
 - **Deep scans** for suspicious files
 - **Ultra scans** for forensic analysis
@@ -241,12 +269,14 @@ pip install -r requirements.txt
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 ### Development Setup
+
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
 3. Make your changes and test thoroughly
 4. Submit a pull request with a clear description
 
 ### Reporting Issues
+
 - Use the [GitHub Issues](https://github.com/yourusername/image-threat-scanner/issues) page
 - Include system information and error messages
 - Provide steps to reproduce the issue
@@ -264,7 +294,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ⚠️ Disclaimer
 
-This tool is intended for legitimate security research and forensic analysis purposes only. Users are responsible for ensuring compliance with applicable laws and regulations in their jurisdiction.
+This tool is intended for legitimate security research and forensic analysis purposes only.
+Users are responsible for ensuring compliance with applicable laws and regulations in their jurisdiction.
 
 ## 🙏 Acknowledgments
 
@@ -276,12 +307,12 @@ This tool is intended for legitimate security research and forensic analysis pur
 
 ## 📞 Support
 
-- 📧 Email: your-email@domain.com
+- 📧 Email: <your-email@domain.com>
 - 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/image-threat-scanner/discussions)
 - 🐛 Bug Reports: [GitHub Issues](https://github.com/yourusername/image-threat-scanner/issues)
 
 ---
 
 <div align="center">
-  <strong>Made with ❤️ for cybersecurity professionals and researchers</strong>
+  **Made with ❤️ for cybersecurity professionals and researchers**
 </div>

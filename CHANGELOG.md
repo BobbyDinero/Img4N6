@@ -8,27 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Initial project structure and documentation
 - GitHub repository setup with automated scripts
 
 ### Changed
+
 - N/A
 
 ### Deprecated
+
 - N/A
 
 ### Removed
+
 - N/A
 
 ### Fixed
+
 - N/A
 
 ### Security
+
 - N/A
 
 ## [1.0.0] - 2025-01-08
 
 ### Added
+
 - **Core Features**
   - Safe in-place file scanning without copying files to server
   - Multi-level analysis (Quick, Deep, Ultra) with different detection capabilities
@@ -88,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Modular code structure for easy extension
 
 ### Technical Specifications
+
 - **Backend**: Flask 2.3.3 with Python 3.8+ support
 - **Frontend**: Vanilla JavaScript with modern CSS3
 - **Image Processing**: OpenCV, Pillow (PIL), NumPy, SciPy
@@ -96,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Platform**: Primary Windows support, basic cross-platform compatibility
 
 ### Performance
+
 - Concurrent file processing with threading
 - Memory-efficient streaming for large files
 - Configurable timeout protection (5 minutes per file)
@@ -103,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Progressive analysis levels for speed vs. accuracy trade-off
 
 ### Security Considerations
+
 - No file upload to server (files remain in original location)
 - Path validation to prevent system directory access
 - Session isolation and cleanup
@@ -112,18 +122,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.0] - 2025-01-05
 
 ### Added
+
 - Beta version with core scanning functionality
 - Basic web interface
 - Initial YARA rules set
 - LSB steganography detection prototype
 
 ### Fixed
+
 - Memory leaks in image processing pipeline
 - False positive reduction in entropy analysis
 
 ## [0.8.0] - 2025-01-01
 
 ### Added
+
 - Alpha version with command-line interface
 - Basic EXIF metadata extraction
 - Simple threat detection algorithms
@@ -137,36 +150,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This is the first stable release of the Image Threat Scanner, featuring comprehensive forensic analysis capabilities designed for cybersecurity professionals and researchers. The application provides enterprise-grade threat detection while maintaining user-friendly operation through an intuitive web interface.
 
 **Key Achievements:**
+
 - **Zero-Copy Scanning**: Revolutionary approach that analyzes files in their original location
 - **Multi-Layer Detection**: Industry-standard steganalysis combined with cutting-edge ML techniques
 - **Production Ready**: Robust error handling, security controls, and performance optimization
 - **Extensible Architecture**: Modular design supporting custom detection algorithms and YARA rules
 
 **Performance Benchmarks:**
+
 - Analyzes 1000+ images in typical scan session
 - Sub-second analysis for most JPEG files in Quick mode
 - Comprehensive Ultra analysis completes in under 60 seconds per file
 - Memory usage optimized for large batch operations
 
 **Security Validation:**
+
 - Tested against known steganography tools (steghide, outguess, jphide)
 - Validated with CTF challenge files and real-world samples
 - False positive rate < 2% on benign image datasets
 - Successfully detects advanced persistent threat (APT) samples
 
 ### Upgrade Path
+
 This is the initial stable release. Future versions will maintain backward compatibility for:
+
 - YARA rule files
 - Configuration settings
 - API endpoints (when implemented)
 
 ### Known Limitations
+
 - Primary Windows support (Linux/macOS compatibility in development)
 - YARA-python dependency may require manual installation on some systems
 - Ultra analysis mode resource-intensive for very large files (>50MB)
 - Limited to local file system scanning (network drive support planned)
 
 ### Coming Soon
+
 - RESTful API for programmatic access
 - Batch export functionality for scan results
 - Advanced reporting with PDF generation

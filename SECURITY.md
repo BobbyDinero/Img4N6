@@ -18,6 +18,7 @@ We take security vulnerabilities seriously. If you discover a security vulnerabi
 **For security vulnerabilities, please DO NOT create a public GitHub issue.**
 
 Instead, please report security issues via email to:
+
 - **Email**: [your-security-email@domain.com]
 - **Subject**: `[SECURITY] Image Threat Scanner Vulnerability Report`
 
@@ -48,6 +49,7 @@ Please include the following information in your report:
 ### 🔒 Security Guidelines
 
 When reporting vulnerabilities:
+
 - ✅ **DO**: Report privately via email
 - ✅ **DO**: Provide detailed reproduction steps
 - ✅ **DO**: Allow reasonable time for fixes before disclosure
@@ -186,6 +188,7 @@ We follow responsible disclosure practices:
 ### Public Advisory
 
 When appropriate, we will publish security advisories including:
+
 - Vulnerability description
 - Affected versions
 - Mitigation steps

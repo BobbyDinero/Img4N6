@@ -7,17 +7,20 @@ Complete installation instructions for the Image Threat Scanner.
 ### Windows Users
 
 1. **Download the Project**
+
    ```cmd
    git clone https://github.com/yourusername/image-threat-scanner.git
    cd image-threat-scanner
    ```
 
 2. **Run Automated Setup**
+
    ```cmd
    setup.bat
    ```
 
 3. **Start Application**
+
    ```cmd
    run_app.bat
    ```
@@ -29,10 +32,12 @@ That's it! The automated setup will handle everything else.
 ### Prerequisites
 
 #### Required Software
+
 - **Python 3.8 or higher** - [Download from python.org](https://www.python.org/downloads/)
 - **Git** (optional) - [Download from git-scm.com](https://git-scm.com/)
 
 #### System Requirements
+
 - **OS**: Windows 10/11 (primary), Linux, macOS (experimental)
 - **RAM**: 4GB minimum, 8GB recommended
 - **Storage**: 2GB free space
@@ -43,21 +48,25 @@ That's it! The automated setup will handle everything else.
 #### 1. Python Installation
 
 **Windows:**
+
 1. Download Python from [python.org](https://www.python.org/downloads/)
 2. **IMPORTANT**: Check "Add Python to PATH" during installation
 3. Verify installation:
+
    ```cmd
    python --version
    python -m pip --version
    ```
 
 **Linux (Ubuntu/Debian):**
+
 ```bash
 sudo apt update
 sudo apt install python3 python3-pip python3-venv
 ```
 
 **Linux (CentOS/RHEL):**
+
 ```bash
 sudo yum install python3 python3-pip
 # or for newer versions
@@ -65,6 +74,7 @@ sudo dnf install python3 python3-pip
 ```
 
 **macOS:**
+
 ```bash
 # Using Homebrew
 brew install python3
@@ -75,12 +85,14 @@ brew install python3
 #### 2. Download Project
 
 **Option 1: Git Clone (Recommended)**
+
 ```bash
 git clone https://github.com/yourusername/image-threat-scanner.git
 cd image-threat-scanner
 ```
 
 **Option 2: Download ZIP**
+
 1. Go to the GitHub repository
 2. Click "Code" → "Download ZIP"
 3. Extract to desired location
@@ -89,12 +101,14 @@ cd image-threat-scanner
 #### 3. Virtual Environment Setup
 
 **Windows:**
+
 ```cmd
 python -m venv venv
 venv\Scripts\activate
 ```
 
 **Linux/macOS:**
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
@@ -130,6 +144,7 @@ mkdir -p templates static/{css,js,images} uploads temp_sessions logs
 #### 7. File Placement
 
 Ensure these files are in the main directory:
+
 - `app.py` (main Flask application)
 - `image_threat_scanner.py` (core scanning engine)
 - `config.py` (configuration)
@@ -138,6 +153,7 @@ Ensure these files are in the main directory:
 - `requirements.txt` (Python dependencies)
 
 Place these files in subdirectories:
+
 - `templates/index.html` (web interface)
 - `static/css/styles.css` (styling)
 - `static/js/main.js` (frontend logic)
@@ -145,11 +161,13 @@ Place these files in subdirectories:
 ## 🚀 Running the Application
 
 ### Method 1: Batch Script (Windows)
+
 ```cmd
 run_app.bat
 ```
 
 ### Method 2: Direct Python
+
 ```bash
 # Activate virtual environment first
 # Windows: venv\Scripts\activate
@@ -159,6 +177,7 @@ python app.py
 ```
 
 ### Method 3: Flask Command
+
 ```bash
 export FLASK_APP=app.py  # Linux/macOS
 set FLASK_APP=app.py     # Windows
@@ -175,12 +194,15 @@ flask run --host=127.0.0.1 --port=5000
 ## 🔧 Advanced Configuration
 
 ### VirusTotal API Setup
+
 1. Sign up at [VirusTotal](https://www.virustotal.com/)
 2. Get your API key from the dashboard
 3. Enter the key in the web interface when scanning
 
 ### Custom YARA Rules
+
 Edit `rules.yar` to add custom detection patterns:
+
 ```yara
 rule Custom_Threat {
     meta:
@@ -194,7 +216,9 @@ rule Custom_Threat {
 ```
 
 ### Application Configuration
+
 Edit `config.py` to modify:
+
 - File size limits
 - Allowed file extensions
 - Scan timeouts
@@ -205,7 +229,9 @@ Edit `config.py` to modify:
 ### Common Issues
 
 #### "Python not found" Error
+
 **Solution:**
+
 ```cmd
 # Verify Python installation
 python --version
@@ -215,13 +241,17 @@ python --version
 ```
 
 #### "Permission Denied" Errors
+
 **Solutions:**
+
 - Run Command Prompt/Terminal as Administrator
 - Check antivirus isn't blocking the application
 - Ensure write permissions for project directory
 
 #### Package Installation Failures
+
 **Solutions:**
+
 ```bash
 # Update pip
 python -m pip install --upgrade pip
@@ -240,7 +270,9 @@ pip install yara-python
 ```
 
 #### YARA Installation Issues
+
 **Windows:**
+
 ```cmd
 # Install Microsoft Visual C++ Build Tools
 # Then try:
@@ -251,6 +283,7 @@ conda install -c conda-forge yara-python
 ```
 
 **Linux:**
+
 ```bash
 # Install dependencies
 sudo apt install build-essential libssl-dev
@@ -261,28 +294,36 @@ pip install yara-python
 ```
 
 #### Memory Issues with Large Files
+
 **Solutions:**
+
 - Increase system virtual memory
 - Scan smaller batches of files
 - Use Quick analysis mode for large datasets
 - Close other applications during scanning
 
 #### Web Interface Not Loading
+
 **Check:**
+
 1. Flask application started without errors
 2. Port 5000 not blocked by firewall
 3. Browser accessing correct URL: `http://127.0.0.1:5000`
 4. Template files exist in `templates/` directory
 
 #### Slow Performance
+
 **Optimization:**
+
 - Use SSD storage for scan targets
 - Increase available RAM
 - Use Quick mode for routine scans
 - Scan specific folders rather than entire drives
 
 ### Debug Mode
+
 Enable debug mode for troubleshooting:
+
 ```bash
 # Edit app.py and set:
 app.run(debug=True, host="127.0.0.1", port=5000)
@@ -293,7 +334,9 @@ set FLASK_DEBUG=1     # Windows
 ```
 
 ### Log Files
+
 Check these locations for error information:
+
 - Application logs: `logs/` directory
 - Flask logs: Console output
 - System logs: Windows Event Viewer / Linux syslog
@@ -301,12 +344,14 @@ Check these locations for error information:
 ## 🔄 Updating
 
 ### Update from Git
+
 ```bash
 git pull origin main
 pip install -r requirements.txt --upgrade
 ```
 
 ### Manual Update
+
 1. Download latest release
 2. Replace application files (keep config files)
 3. Run `pip install -r requirements.txt --upgrade`
@@ -315,6 +360,7 @@ pip install -r requirements.txt --upgrade
 ## 🗑️ Uninstallation
 
 ### Remove Application
+
 ```bash
 # Deactivate virtual environment
 deactivate
@@ -325,6 +371,7 @@ deactivate
 ```
 
 ### Clean Python Environment
+
 ```bash
 # Remove virtual environment
 rm -rf venv  # Linux/macOS
