@@ -15,6 +15,7 @@ import numpy as np
 from scipy import fftpack, stats
 from scipy.signal import find_peaks
 import warnings
+from datetime import datetime
 
 warnings.filterwarnings("ignore")
 
@@ -65,7 +66,670 @@ def compute_sha256(file_path):
         return f"Error: {e}"
 
 
-# === EXIF ANALYSIS ===
+# === NEW: FILE STRUCTURE VALIDATION ===
+
+
+def detect_polyglot_files(file_path):
+    """Detect files that are valid in multiple formats (polyglots)"""
+    findings = []
+
+    try:
+        with open(file_path, "rb") as f:
+            header = f.read(1024)
+            f.seek(-512, 2)  # Go to 512 bytes from end
+            trailer = f.read(512)
+
+        # Check for multiple valid headers
+        format_signatures = {
+            "JPEG": [b"\xff\xd8\xff"],
+            "PNG": [b"\x89PNG\r\n\x1a\n"],
+            "GIF": [b"GIF87a", b"GIF89a"],
+            "PDF": [b"%PDF-"],
+            "ZIP": [b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"],
+            "RAR": [b"Rar!\x1a\x07\x00"],
+            "PE": [b"MZ"],
+            "ELF": [b"\x7fELF"],
+        }
+
+        detected_formats = []
+        for format_name, signatures in format_signatures.items():
+            for sig in signatures:
+                if sig in header or sig in trailer:
+                    detected_formats.append(format_name)
+                    break
+
+        if len(set(detected_formats)) > 1:
+            findings.append(
+                f"Polyglot file detected: {', '.join(set(detected_formats))}"
+            )
+
+        # Check for appended data after valid image
+        file_ext = os.path.splitext(file_path)[1].lower()
+        if file_ext in [".jpg", ".jpeg"]:
+            # JPEG should end with FFD9
+            if not trailer.endswith(b"\xff\xd9") and b"\xff\xd9" in header:
+                # Find the actual JPEG end
+                with open(file_path, "rb") as f:
+                    data = f.read()
+                jpeg_end = data.rfind(b"\xff\xd9")
+                if (
+                    jpeg_end > 0 and jpeg_end < len(data) - 100
+                ):  # Significant data after JPEG end
+                    appended_size = len(data) - jpeg_end - 2
+                    findings.append(
+                        f"Data appended after JPEG end marker: {appended_size} bytes"
+                    )
+
+        elif file_ext == ".png":
+            # PNG should end with IEND chunk
+            if b"IEND" in header and not trailer.endswith(b"IEND\xae\x42\x60\x82"):
+                with open(file_path, "rb") as f:
+                    data = f.read()
+                iend_pos = data.rfind(b"IEND\xae\x42\x60\x82")
+                if iend_pos > 0 and iend_pos < len(data) - 50:
+                    appended_size = len(data) - iend_pos - 8
+                    findings.append(
+                        f"Data appended after PNG IEND chunk: {appended_size} bytes"
+                    )
+
+    except Exception as e:
+        return []
+
+    return findings
+
+
+def validate_file_structure(file_path):
+    """Validate file structure integrity"""
+    findings = []
+
+    try:
+        file_ext = os.path.splitext(file_path)[1].lower()
+        file_size = os.path.getsize(file_path)
+
+        if file_ext in [".jpg", ".jpeg"]:
+            # Validate JPEG structure
+            try:
+                img = Image.open(file_path)
+                declared_size = img.size[0] * img.size[1] * 3  # Rough estimate
+
+                # Check if file size is suspiciously large compared to image dimensions
+                if file_size > declared_size * 2:  # Very conservative threshold
+                    size_ratio = file_size / declared_size
+                    findings.append(
+                        f"File size ({file_size:,} bytes) much larger than expected for {img.size[0]}x{img.size[1]} image (ratio: {size_ratio:.1f}x)"
+                    )
+
+            except Exception:
+                pass
+
+        elif file_ext == ".png":
+            # PNG chunk validation
+            try:
+                with open(file_path, "rb") as f:
+                    f.seek(8)  # Skip PNG signature
+                    chunks = []
+                    critical_chunks = []
+
+                    while True:
+                        length_bytes = f.read(4)
+                        if len(length_bytes) != 4:
+                            break
+
+                        chunk_length = struct.unpack(">I", length_bytes)[0]
+                        chunk_type = f.read(4)
+
+                        if len(chunk_type) != 4:
+                            break
+
+                        chunks.append(chunk_type.decode("ascii", errors="ignore"))
+
+                        # Check if critical chunk (uppercase first letter)
+                        if chunk_type[0] < 97:  # ASCII 'a' = 97
+                            critical_chunks.append(
+                                chunk_type.decode("ascii", errors="ignore")
+                            )
+
+                        f.seek(chunk_length + 4, 1)  # Skip data + CRC
+
+                    # Check for suspicious number of chunks
+                    if len(chunks) > 50:
+                        findings.append(f"Excessive PNG chunks: {len(chunks)}")
+
+                    # Check for unusual critical chunks
+                    expected_critical = ["IHDR", "IDAT", "IEND"]
+                    unexpected_critical = [
+                        c for c in critical_chunks if c not in expected_critical
+                    ]
+                    if unexpected_critical:
+                        findings.append(
+                            f"Unexpected critical PNG chunks: {', '.join(unexpected_critical)}"
+                        )
+
+            except Exception:
+                pass
+
+    except Exception as e:
+        return []
+
+    return findings
+
+
+# === NEW: TIMESTAMP ANALYSIS ===
+
+
+def analyze_timestamp_anomalies(file_path):
+    """Analyze file and EXIF timestamps for manipulation indicators"""
+    findings = []
+
+    try:
+        # Get file system timestamps
+        file_stat = os.stat(file_path)
+        fs_created = datetime.fromtimestamp(file_stat.st_ctime)
+        fs_modified = datetime.fromtimestamp(file_stat.st_mtime)
+
+        # Get EXIF timestamps
+        try:
+            img = Image.open(file_path)
+            exif_data = img._getexif()
+
+            if exif_data:
+                # Common EXIF timestamp tags
+                timestamp_tags = {
+                    306: "DateTime",
+                    36867: "DateTimeOriginal",
+                    36868: "DateTimeDigitized",
+                }
+
+                exif_timestamps = {}
+                for tag_id, tag_name in timestamp_tags.items():
+                    if tag_id in exif_data:
+                        try:
+                            exif_time = datetime.strptime(
+                                exif_data[tag_id], "%Y:%m:%d %H:%M:%S"
+                            )
+                            exif_timestamps[tag_name] = exif_time
+                        except:
+                            continue
+
+                # Analyze timestamp relationships
+                if exif_timestamps:
+                    # Check if EXIF times are in the future
+                    now = datetime.now()
+                    for name, timestamp in exif_timestamps.items():
+                        if timestamp > now:
+                            findings.append(
+                                f"EXIF {name} is in the future: {timestamp}"
+                            )
+
+                    # Check if EXIF times are much older than file system times
+                    for name, exif_time in exif_timestamps.items():
+                        fs_diff_days = abs((fs_modified - exif_time).days)
+                        if fs_diff_days > 365:  # More than a year difference
+                            findings.append(
+                                f"Large discrepancy between EXIF {name} and file modification time: {fs_diff_days} days"
+                            )
+
+                    # Check for suspicious timestamp patterns (not just identical)
+                    # Only flag if timestamps are identical AND it's unusual for the device type
+                    timestamp_values = list(exif_timestamps.values())
+                    if len(set(timestamp_values)) == 1 and len(timestamp_values) > 1:
+                        # Check if this is from a known device that naturally creates identical timestamps
+                        try:
+                            img = Image.open(file_path)
+                            exif_dict = img._getexif()
+                            device_make = (
+                                exif_dict.get(271, "").lower() if exif_dict else ""
+                            )  # Make tag
+                            device_model = (
+                                exif_dict.get(272, "").lower() if exif_dict else ""
+                            )  # Model tag
+
+                            # Don't flag for devices known to create identical timestamps
+                            known_devices = [
+                                "apple",
+                                "iphone",
+                                "ipad",
+                                "samsung",
+                                "google",
+                                "pixel",
+                            ]
+                            is_known_device = any(
+                                device in device_make or device in device_model
+                                for device in known_devices
+                            )
+
+                            if not is_known_device:
+                                findings.append(
+                                    "All EXIF timestamps are identical (possible manipulation)"
+                                )
+                        except:
+                            # If we can't determine device, be conservative and don't flag
+                            pass
+
+        except Exception:
+            pass
+
+        # Check file system timestamp anomalies
+        time_diff = abs((fs_created - fs_modified).total_seconds())
+        if time_diff < 1:  # Created and modified within 1 second
+            findings.append(
+                "File creation and modification times are suspiciously close"
+            )
+
+    except Exception as e:
+        return []
+
+    return findings
+
+
+# === NEW: PIXEL CLUSTERING ANALYSIS ===
+
+
+def detect_pixel_clustering_anomalies(file_path):
+    """Detect unnatural pixel clustering that might indicate hidden data"""
+    findings = []
+
+    try:
+        img = cv2.imread(file_path, cv2.IMREAD_COLOR)
+        if img is None:
+            return findings
+
+        # Convert to different color spaces for analysis
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+        # Analyze color distribution in each channel
+        for i, color in enumerate(["Blue", "Green", "Red"]):
+            channel = img[:, :, i].flatten()
+
+            # Check for unnatural clustering at specific values
+            value_counts = Counter(channel)
+
+            # Look for values that appear much more frequently than neighbors
+            for value in range(1, 254):  # Skip pure black/white
+                if value in value_counts:
+                    neighbors = [
+                        value_counts.get(value - 1, 0),
+                        value_counts.get(value + 1, 0),
+                    ]
+                    avg_neighbor = sum(neighbors) / len(neighbors) if neighbors else 0
+
+                    if (
+                        avg_neighbor > 0 and value_counts[value] > avg_neighbor * 5
+                    ):  # Conservative threshold
+                        frequency = value_counts[value] / len(channel)
+                        if frequency > 0.05:  # More than 5% of pixels
+                            findings.append(
+                                f"Unnatural {color} channel clustering at value {value}: {frequency:.2%} of pixels"
+                            )
+
+        # Check for LSB plane anomalies in a different way
+        for i, color in enumerate(["Blue", "Green", "Red"]):
+            channel = img[:, :, i]
+            lsb_plane = channel & 1
+
+            # Count runs of identical LSB values
+            lsb_flat = lsb_plane.flatten()
+            runs = []
+            current_run = 1
+
+            for j in range(1, len(lsb_flat)):
+                if lsb_flat[j] == lsb_flat[j - 1]:
+                    current_run += 1
+                else:
+                    runs.append(current_run)
+                    current_run = 1
+            runs.append(current_run)
+
+            # Check for unusually long runs - be more conservative for JPEG
+            max_run = max(runs) if runs else 0
+            avg_run = sum(runs) / len(runs) if runs else 0
+
+            # Much higher thresholds to reduce false positives
+            file_ext = os.path.splitext(file_path)[1].lower()
+            if file_ext in [".jpg", ".jpeg"]:
+                # JPEG compression naturally creates very long LSB runs
+                threshold = len(lsb_flat) * 0.3  # 30% of image size
+            else:
+                threshold = 5000  # Much higher for non-JPEG
+
+            if max_run > threshold:
+                findings.append(
+                    f"Extremely suspicious {color} LSB run length: {max_run} pixels"
+                )
+
+    except Exception as e:
+        return []
+
+    return findings
+
+
+# === NEW: MODERN THREAT DETECTION ===
+
+
+def detect_modern_threats(file_path):
+    """Detect modern threat vectors in image metadata"""
+    findings = []
+
+    try:
+        # Read all image data including metadata
+        with open(file_path, "rb") as f:
+            file_data = f.read()
+
+        file_text = file_data.decode("utf-8", errors="ignore").lower()
+
+        # Modern C2 and communication channels
+        modern_patterns = {
+            "IPFS Hash": r"qm[1-9a-hj-np-za-km-z]{44}",
+            "Ethereum Address": r"0x[a-f0-9]{40}",
+            "Bitcoin Address": r"[13][a-km-za-hj-np-z1-9]{25,34}",
+            "Pastebin Raw": r"pastebin\.com/raw/[a-z0-9]{8}",
+            "GitHub Raw": r"raw\.githubusercontent\.com/[^/]+/[^/]+/",
+            "OneDrive Share": r"1drv\.ms/[a-z]/[a-z0-9]+",
+            "Google Drive": r"drive\.google\.com/file/d/[a-za-z0-9_-]+",
+            "Dropbox Share": r"dropbox\.com/s/[a-z0-9]+/",
+            "Mega.nz": r"mega\.nz/#[!a-z0-9]+",
+            "Telegram Bot": r"t\.me/[a-z0-9_]+bot",
+        }
+
+        for threat_name, pattern in modern_patterns.items():
+            matches = re.findall(pattern, file_text)
+            if matches:
+                findings.append(f"{threat_name} detected: {matches[0]}")
+
+        # Check for Base64 encoded URLs
+        base64_patterns = re.findall(r"[A-Za-z0-9+/]{40,}={0,2}", file_text)
+        for pattern in base64_patterns[:5]:  # Check first 5 matches only
+            try:
+                decoded = base64.b64decode(pattern).decode("utf-8", errors="ignore")
+                if "http" in decoded.lower() or ".com" in decoded.lower():
+                    findings.append(f"Base64 encoded URL detected: {decoded[:100]}")
+            except:
+                continue
+
+        # Check for cryptocurrency mentions with amounts - more specific patterns
+        crypto_amount_patterns = [
+            r"(bitcoin|btc)\s*(wallet|address|payment|send|receive|transfer)\s*[:\-]?\s*([0-9]+\.?[0-9]*)",
+            r"(ethereum|eth)\s*(wallet|address|payment|send|receive|transfer)\s*[:\-]?\s*([0-9]+\.?[0-9]*)",
+            r"(monero|xmr)\s*(wallet|address|payment|send|receive|transfer)\s*[:\-]?\s*([0-9]+\.?[0-9]*)",
+            r"(send|transfer|pay)\s*([0-9]+\.?[0-9]*)\s*(bitcoin|btc|ethereum|eth|monero|xmr)",
+            r"(wallet|address)\s*[:\-]\s*([0-9]+\.?[0-9]*)\s*(bitcoin|btc|ethereum|eth|monero|xmr)",
+        ]
+
+        for pattern in crypto_amount_patterns:
+            matches = re.findall(pattern, file_text)
+            if matches:
+                for match in matches[:3]:  # Limit output
+                    if len(match) == 3:
+                        findings.append(
+                            f"Cryptocurrency transaction reference: {match[0]} {match[1]} {match[2]}"
+                        )
+                    else:
+                        findings.append(
+                            f"Cryptocurrency transaction reference: {' '.join(match)}"
+                        )
+
+    except Exception as e:
+        return []
+
+    return findings
+
+
+# === NEW: AI-GENERATED IMAGE DETECTION ===
+
+
+def detect_ai_generated_content(file_path):
+    """Comprehensive AI-generated image detection with probability scoring"""
+    findings = []
+    ai_scores = {}
+
+    try:
+        # Load image for analysis
+        img = cv2.imread(file_path, cv2.IMREAD_COLOR)
+        if img is None:
+            # Try with PIL as backup
+            try:
+                from PIL import Image
+
+                pil_img = Image.open(file_path)
+                img_array = np.array(pil_img)
+                if len(img_array.shape) == 3:
+                    img = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+                else:
+                    img = img_array
+            except:
+                return findings, 0.0
+
+        # Convert to grayscale safely
+        if len(img.shape) == 3:
+            img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            img_gray = img
+
+        h, w = img_gray.shape
+
+        # === STATISTICAL FINGERPRINT ANALYSIS ===
+
+        # 1. File-level entropy and randomness (strongest indicator)
+        try:
+            with open(file_path, "rb") as f:
+                file_data = f.read()
+
+            file_entropy = calculate_entropy(file_data)
+            is_random, chi_stat = chi_square_test(file_data)
+
+            # High file entropy is a strong AI indicator
+            if file_entropy > 7.5:
+                ai_scores["high_file_entropy"] = (
+                    min((file_entropy - 7.5) / 0.5, 1.0) * 0.25
+                )
+
+            # Combination of high entropy + randomness = very strong AI signature
+            if file_entropy > 7.8 and is_random:
+                ai_scores["entropy_plus_random"] = 0.20
+            elif is_random:
+                ai_scores["random_distribution"] = 0.10
+
+        except Exception as e:
+            pass
+
+        # 2. Pixel-level entropy analysis
+        try:
+            pixel_entropy = calculate_entropy(img_gray.flatten())
+            if pixel_entropy > 7.0:
+                ai_scores["high_pixel_entropy"] = (
+                    min((pixel_entropy - 7.0) / 1.0, 1.0) * 0.12
+                )
+        except:
+            pass
+
+        # 3. Statistical moments analysis
+        try:
+            pixel_kurtosis = stats.kurtosis(img_gray.flatten())
+            pixel_skew = stats.skew(img_gray.flatten())
+
+            # AI images often have extreme statistical moments
+            if abs(pixel_kurtosis) > 0.5:
+                ai_scores["pixel_kurtosis"] = min(abs(pixel_kurtosis) / 3.0, 1.0) * 0.15
+
+            if abs(pixel_skew) > 1.0:
+                ai_scores["pixel_skew"] = min(abs(pixel_skew) / 4.0, 1.0) * 0.12
+
+        except Exception as e:
+            pass
+
+        # 4. Gradient analysis
+        try:
+            grad_x = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=3)
+            grad_y = cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=3)
+            gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
+
+            grad_skew = stats.skew(gradient_magnitude.flatten())
+            grad_kurtosis = stats.kurtosis(gradient_magnitude.flatten())
+
+            if abs(grad_skew) > 2.0:
+                ai_scores["gradient_skew"] = min(abs(grad_skew) / 8.0, 1.0) * 0.10
+            if abs(grad_kurtosis) > 10.0:
+                ai_scores["gradient_kurtosis"] = (
+                    min(abs(grad_kurtosis) / 25.0, 1.0) * 0.10
+                )
+
+        except Exception as e:
+            pass
+
+        # 5. Color channel correlation (for color images)
+        try:
+            if len(img.shape) == 3 and img.shape[2] >= 3:
+                r_channel = img[:, :, 2].flatten()
+                g_channel = img[:, :, 1].flatten()
+                b_channel = img[:, :, 0].flatten()
+
+                # Calculate cross-correlations
+                rg_corr = np.corrcoef(r_channel, g_channel)[0, 1]
+                rb_corr = np.corrcoef(r_channel, b_channel)[0, 1]
+                gb_corr = np.corrcoef(g_channel, b_channel)[0, 1]
+
+                # Filter out NaN correlations
+                correlations = [
+                    c for c in [rg_corr, rb_corr, gb_corr] if not np.isnan(c)
+                ]
+                if correlations:
+                    avg_correlation = np.mean([abs(c) for c in correlations])
+
+                    # Natural images have higher channel correlation
+                    if avg_correlation < 0.75:
+                        ai_scores["channel_independence"] = (
+                            (0.75 - avg_correlation) / 0.75 * 0.12
+                        )
+        except Exception as e:
+            pass
+
+        # 6. Missing camera metadata (strong indicator for AI)
+        try:
+            from PIL import Image
+
+            pil_img = Image.open(file_path)
+            exif_data = pil_img._getexif()
+
+            has_camera_info = False
+            if exif_data:
+                camera_tags = [
+                    271,
+                    272,
+                    306,
+                    36867,
+                    36868,
+                ]  # Make, Model, DateTime, etc.
+                has_camera_info = any(tag in exif_data for tag in camera_tags)
+
+            if not has_camera_info:
+                ai_scores["missing_metadata"] = 0.18  # Strong weight
+        except Exception as e:
+            ai_scores["missing_metadata"] = 0.18  # Assume missing if can't read
+
+        # 7. Edge density analysis
+        try:
+            edges = cv2.Canny(img_gray, 50, 150)
+            edge_density = np.sum(edges > 0) / (h * w)
+
+            # AI images often have unusual edge densities
+            if edge_density > 0.12 or edge_density < 0.03:
+                if edge_density > 0.12:
+                    ai_scores["edge_inconsistency"] = (
+                        min((edge_density - 0.12) / 0.08, 1.0) * 0.08
+                    )
+                else:
+                    ai_scores["edge_inconsistency"] = (
+                        (0.03 - edge_density) / 0.03 * 0.08
+                    )
+        except Exception as e:
+            pass
+
+        # 8. Block artifact detection (VAE signatures)
+        try:
+            block_artifacts = 0
+            total_blocks = 0
+            kernel_size = 8
+
+            for i in range(0, h - kernel_size, kernel_size):
+                for j in range(0, w - kernel_size, kernel_size):
+                    block = img_gray[i : i + kernel_size, j : j + kernel_size]
+                    total_blocks += 1
+
+                    unique_values = len(np.unique(block))
+                    if unique_values < 25:  # VAE quantization artifacts
+                        block_artifacts += 1
+
+            if total_blocks > 0:
+                artifact_ratio = block_artifacts / total_blocks
+                if artifact_ratio > 0.05:
+                    ai_scores["vae_artifacts"] = min(artifact_ratio / 0.2, 1.0) * 0.10
+        except Exception as e:
+            pass
+
+        # === CALCULATE TOTAL PROBABILITY ===
+
+        total_score = sum(ai_scores.values())
+        ai_probability = min(total_score, 1.0)
+
+        # Generate findings based on detection
+        if ai_probability > 0.05:  # Low threshold
+            confidence_level = "LOW"
+            if ai_probability > 0.25:
+                confidence_level = "MEDIUM"
+            if ai_probability > 0.5:
+                confidence_level = "HIGH"
+            if ai_probability > 0.75:
+                confidence_level = "VERY HIGH"
+
+            findings.append(
+                f"AI-generated content detected (Confidence: {confidence_level}, Score: {ai_probability:.2f})"
+            )
+
+            # Report top contributing factors
+            sorted_scores = sorted(ai_scores.items(), key=lambda x: x[1], reverse=True)
+            top_indicators = sorted_scores[:4]
+
+            indicator_names = {
+                "high_file_entropy": "High file entropy",
+                "entropy_plus_random": "High entropy + randomness",
+                "random_distribution": "Random data distribution",
+                "high_pixel_entropy": "High pixel entropy",
+                "pixel_kurtosis": "Abnormal pixel kurtosis",
+                "pixel_skew": "Abnormal pixel skewness",
+                "gradient_skew": "Abnormal gradient distribution",
+                "gradient_kurtosis": "Extreme gradient kurtosis",
+                "channel_independence": "Independent color channels",
+                "missing_metadata": "Missing camera metadata",
+                "edge_inconsistency": "Inconsistent edge patterns",
+                "vae_artifacts": "VAE decoder artifacts",
+            }
+
+            for indicator, score in top_indicators:
+                if score > 0.03:
+                    indicator_name = indicator_names.get(indicator, indicator)
+                    findings.append(f"  └─ {indicator_name}: {score:.2f}")
+
+            # Suggest generation method
+            if ai_scores.get("vae_artifacts", 0) > 0.05:
+                findings.append(
+                    "  └─ Likely generated by: Diffusion model (Stable Diffusion/FLUX)"
+                )
+            elif ai_scores.get("entropy_plus_random", 0) > 0.1:
+                findings.append("  └─ Likely generated by: Advanced AI model")
+            elif total_score > 0.4:
+                findings.append(
+                    "  └─ Likely generated by: Neural network-based generator"
+                )
+
+        return findings, ai_probability
+
+    except Exception as e:
+        # Return basic score based on missing metadata if everything else fails
+        return [f"AI detection error: {str(e)}"], 0.0
+
+
+# === EXISTING FUNCTIONS (keeping all your original functions) ===
 
 
 def extract_exif_data(file_path):
@@ -140,9 +804,6 @@ def analyze_metadata_anomalies(exif_data):
     return anomalies
 
 
-# === STATISTICAL ANALYSIS ===
-
-
 def detect_data_anomalies(file_path):
     """Detect statistical anomalies that might indicate hidden data"""
     anomalies = []
@@ -198,9 +859,6 @@ def detect_data_anomalies(file_path):
     return anomalies
 
 
-# === LSB STEGANOGRAPHY DETECTION ===
-
-
 def detect_lsb_steganography(file_path):
     """Detect LSB (Least Significant Bit) steganography"""
     try:
@@ -251,9 +909,6 @@ def detect_lsb_steganography(file_path):
 
     except Exception as e:
         return []  # Don't report numpy comparison errors
-
-
-# === ADVANCED STEGANOGRAPHY DETECTION ===
 
 
 def detect_dct_steganography(file_path):
@@ -523,9 +1178,6 @@ def detect_custom_steganography_patterns(file_path):
     return findings
 
 
-# === MACHINE LEARNING BASED DETECTION ===
-
-
 def ml_anomaly_detection(file_path):
     """Use statistical ML techniques to detect anomalies"""
     findings = []
@@ -667,7 +1319,78 @@ def ml_anomaly_detection(file_path):
     return findings
 
 
-# === STEGANALYSIS ALGORITHMS ===
+def deep_metadata_analysis(file_path):
+    """Advanced metadata analysis for hidden content"""
+    findings = []
+
+    try:
+        # JPEG Comment and Application segments analysis
+        if file_path.lower().endswith((".jpg", ".jpeg")):
+            with open(file_path, "rb") as f:
+                data = f.read()
+
+            # Look for multiple APP segments (suspicious)
+            app_segments = []
+            pos = 0
+            while pos < len(data) - 1:
+                if data[pos] == 0xFF and 0xE0 <= data[pos + 1] <= 0xEF:
+                    app_segments.append(data[pos + 1])
+                pos += 1
+
+            if len(set(app_segments)) > 3:  # More than 3 different APP segments
+                findings.append(
+                    f"Multiple APP segments found: {len(set(app_segments))} types"
+                )
+
+            # Look for COM segments (comments)
+            com_positions = []
+            pos = 0
+            while pos < len(data) - 1:
+                if data[pos] == 0xFF and data[pos + 1] == 0xFE:
+                    com_positions.append(pos)
+                pos += 1
+
+            if len(com_positions) > 1:
+                findings.append(f"Multiple JPEG comment segments: {len(com_positions)}")
+
+        # Extended EXIF analysis
+        try:
+            from PIL.ExifTags import GPSTAGS
+
+            img = Image.open(file_path)
+            exif_dict = img._getexif()
+
+            if exif_dict:
+                # Check for unusual EXIF tags
+                standard_tags = set(TAGS.values())
+                for tag_id, value in exif_dict.items():
+                    tag_name = TAGS.get(tag_id, tag_id)
+
+                    if isinstance(tag_name, int) and tag_name > 50000:
+                        findings.append(f"Unusual EXIF tag ID: {tag_name}")
+
+                    # Check for binary data in text fields
+                    if isinstance(value, bytes) and len(value) > 100:
+                        entropy = calculate_entropy(value)
+                        if entropy > 7:
+                            findings.append(
+                                f"High entropy binary data in EXIF tag {tag_name}: {entropy:.2f}"
+                            )
+
+                # GPS data analysis
+                gps_info = exif_dict.get(34853)  # GPS Info tag
+                if gps_info:
+                    findings.append(
+                        "GPS coordinates present - potential privacy/OPSEC concern"
+                    )
+
+        except Exception:
+            pass
+
+    except Exception as e:
+        findings.append(f"Deep metadata analysis error: {e}")
+
+    return findings
 
 
 def rs_steganalysis(file_path):
@@ -859,86 +1582,6 @@ def weighted_stego_analysis(file_path):
     return findings
 
 
-# === ADVANCED METADATA ANALYSIS ===
-
-
-def deep_metadata_analysis(file_path):
-    """Advanced metadata analysis for hidden content"""
-    findings = []
-
-    try:
-        # JPEG Comment and Application segments analysis
-        if file_path.lower().endswith((".jpg", ".jpeg")):
-            with open(file_path, "rb") as f:
-                data = f.read()
-
-            # Look for multiple APP segments (suspicious)
-            app_segments = []
-            pos = 0
-            while pos < len(data) - 1:
-                if data[pos] == 0xFF and 0xE0 <= data[pos + 1] <= 0xEF:
-                    app_segments.append(data[pos + 1])
-                pos += 1
-
-            if len(set(app_segments)) > 3:  # More than 3 different APP segments
-                findings.append(
-                    f"Multiple APP segments found: {len(set(app_segments))} types"
-                )
-
-            # Look for COM segments (comments)
-            com_positions = []
-            pos = 0
-            while pos < len(data) - 1:
-                if data[pos] == 0xFF and data[pos + 1] == 0xFE:
-                    com_positions.append(pos)
-                pos += 1
-
-            if len(com_positions) > 1:
-                findings.append(f"Multiple JPEG comment segments: {len(com_positions)}")
-
-        # Extended EXIF analysis
-        try:
-            from PIL.ExifTags import GPSTAGS
-
-            img = Image.open(file_path)
-            exif_dict = img._getexif()
-
-            if exif_dict:
-                # Check for unusual EXIF tags
-                standard_tags = set(TAGS.values())
-                for tag_id, value in exif_dict.items():
-                    tag_name = TAGS.get(tag_id, tag_id)
-
-                    if isinstance(tag_name, int) and tag_name > 50000:
-                        findings.append(f"Unusual EXIF tag ID: {tag_name}")
-
-                    # Check for binary data in text fields
-                    if isinstance(value, bytes) and len(value) > 100:
-                        entropy = calculate_entropy(value)
-                        if entropy > 7:
-                            findings.append(
-                                f"High entropy binary data in EXIF tag {tag_name}: {entropy:.2f}"
-                            )
-
-                # GPS data analysis
-                gps_info = exif_dict.get(34853)  # GPS Info tag
-                if gps_info:
-                    findings.append(
-                        "GPS coordinates present - potential privacy/OPSEC concern"
-                    )
-
-        except Exception:
-            pass
-
-    except Exception as e:
-        findings.append(f"Deep metadata analysis error: {e}")
-
-    return findings
-
-
-# === FORENSIC VALIDATION ===
-
-
 def blockchain_hash_validation(file_path):
     """Validate against known hash databases and blockchain records"""
     findings = []
@@ -998,9 +1641,6 @@ def blockchain_hash_validation(file_path):
     return findings
 
 
-# === YARA SCANNING ===
-
-
 def scan_with_yara(file_path, rules_path="rules.yar"):
     """Scan file with YARA rules"""
     try:
@@ -1009,9 +1649,6 @@ def scan_with_yara(file_path, rules_path="rules.yar"):
         return [str(match) for match in matches]
     except Exception as e:
         return [f"YARA error: {e}"]
-
-
-# === VIRUSTOTAL API ===
 
 
 def check_virustotal_hash(sha256_hash, api_key):
@@ -1052,6 +1689,22 @@ def scan_image(
     sha256 = compute_sha256(file_path)
     print(f"SHA-256: {sha256}")
 
+    # Quick AI check for header
+    ai_findings_preview, ai_prob_preview = detect_ai_generated_content(file_path)
+    if ai_prob_preview > 0.1:
+        confidence = "LOW"
+        if ai_prob_preview > 0.3:
+            confidence = "MEDIUM"
+        if ai_prob_preview > 0.6:
+            confidence = "HIGH"
+        if ai_prob_preview > 0.8:
+            confidence = "VERY HIGH"
+        print(
+            f"🤖 AI Content Probability: {ai_prob_preview:.1%} ({confidence} confidence)"
+        )
+    else:
+        print("📷 Natural Image: No AI generation detected")
+
     # Basic EXIF analysis
     print("\n=== BASIC ANALYSIS ===")
     print("📋 EXIF Metadata:")
@@ -1078,6 +1731,45 @@ def scan_image(
         print("\n📊 METADATA ANOMALIES:")
         for anomaly in metadata_anomalies:
             print(f"  - {anomaly}")
+
+    # NEW: File structure validation
+    print("\n🔍 File Structure Validation:")
+    polyglot_findings = detect_polyglot_files(file_path)
+    structure_findings = validate_file_structure(file_path)
+
+    all_structure_findings = polyglot_findings + structure_findings
+    if all_structure_findings:
+        for finding in all_structure_findings:
+            print(f"  - {finding}")
+    else:
+        print("  - No file structure anomalies detected")
+
+    # NEW: Timestamp analysis
+    print("\n⏰ Timestamp Analysis:")
+    timestamp_findings = analyze_timestamp_anomalies(file_path)
+    if timestamp_findings:
+        for finding in timestamp_findings:
+            print(f"  - {finding}")
+    else:
+        print("  - No timestamp anomalies detected")
+
+    # NEW: Modern threat detection
+    print("\n🌐 Modern Threat Detection:")
+    modern_findings = detect_modern_threats(file_path)
+    if modern_findings:
+        for finding in modern_findings:
+            print(f"  - {finding}")
+    else:
+        print("  - No modern threat indicators found")
+
+    # NEW: AI-generated content detection
+    print("\n🤖 AI-Generated Content Detection:")
+    ai_findings, ai_probability = detect_ai_generated_content(file_path)
+    if ai_findings:
+        for finding in ai_findings:
+            print(f"  - {finding}")
+    else:
+        print("  - No AI-generated content indicators found")
 
     # YARA scan
     print("\n🔍 YARA Pattern Matching:")
@@ -1116,6 +1808,15 @@ def scan_image(
                 print(f"  - {finding}")
         else:
             print("  - No LSB steganography indicators found")
+
+        # NEW: Pixel clustering analysis
+        print("\n🎨 Pixel Clustering Analysis:")
+        clustering_findings = detect_pixel_clustering_anomalies(file_path)
+        if clustering_findings:
+            for finding in clustering_findings:
+                print(f"  - {finding}")
+        else:
+            print("  - No pixel clustering anomalies detected")
 
     if advanced_analysis:
         print("\n=== ADVANCED ANALYSIS ===")
@@ -1216,7 +1917,7 @@ def scan_image(
 # === ENTRY POINT ===
 
 if __name__ == "__main__":
-    print("🚀 Ultra-Robust Forensic Image Threat Scanner")
+    print("🚀 Enhanced Forensic Image Threat Scanner")
     print("=" * 60)
 
     folder = input("Enter full path to image folder: ").strip()
@@ -1227,8 +1928,8 @@ if __name__ == "__main__":
     )
 
     print("\nAnalysis Options:")
-    print("1. Quick scan (basic + YARA)")
-    print("2. Deep scan (+ statistical analysis)")
+    print("1. Quick scan (basic + structure validation + modern threats)")
+    print("2. Deep scan (+ statistical analysis + pixel clustering)")
     print("3. Ultra scan (+ advanced steganography detection)")
 
     choice = input("Select analysis level (1-3): ").strip()

@@ -213,3 +213,158 @@ rule GPS_Location_Data {
     condition:
         any of them
 }
+
+// === NEW ENHANCED RULES FOR MODERN THREATS ===
+
+rule Modern_C2_Channels {
+    meta:
+        description = "Detects modern C2 communication channels"
+        author = "Enhanced Scanner"
+    strings:
+        $pastebin = /https:\/\/pastebin\.com\/raw\/[A-Za-z0-9]{8}/
+        $github_raw = /https:\/\/raw\.githubusercontent\.com\/[^\/]+\/[^\/]+\/[^\/]+/
+        $ipfs_hash = /Qm[1-9A-HJ-NP-Za-km-z]{44}/
+        $mega_nz = /https:\/\/mega\.nz\/#[!A-Za-z0-9_-]+/
+        $onedrive = /https:\/\/1drv\.ms\/[a-z]\/[A-Za-z0-9_-]+/
+        $dropbox = /https:\/\/dropbox\.com\/s\/[A-Za-z0-9]+\//
+    condition:
+        any of them
+}
+
+rule Cloud_Storage_Exfiltration {
+    meta:
+        description = "Detects cloud storage exfiltration patterns"
+        author = "Enhanced Scanner"
+    strings:
+        $gdrive_api = /https:\/\/drive\.google\.com\/file\/d\/[A-Za-z0-9_-]+/
+        $box_share = /https:\/\/[^.]+\.box\.com\/s\/[A-Za-z0-9]+/
+        $wetransfer = /https:\/\/we\.tl\/[A-Za-z0-9]+/
+        $temp_email = /10minutemail|guerrillamail|mailinator|tempmail/
+        $file_upload = /file\.io|transfer\.sh|0x0\.st/
+    condition:
+        any of them
+}
+
+rule Cryptocurrency_Mining_References {
+    meta:
+        description = "Detects cryptocurrency mining references"
+        author = "Enhanced Scanner"
+    strings:
+        $monero_addr = /4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}/
+        $pool_mining = /pool\.mining|mining\.pool|stratum\+tcp/
+        $xmrig = "xmrig"
+        $cpuminer = "cpuminer"
+        $mining_algo = /cryptonight|randomx|ethash|kawpow/
+        $wallet_mining = /wallet.*mining|mining.*wallet/
+    condition:
+        any of them
+}
+
+rule NFT_Blockchain_References {
+    meta:
+        description = "Detects NFT and blockchain references"
+        author = "Enhanced Scanner"
+    strings:
+        $opensea = /opensea\.io\/assets\/[^\/]+\/[^\/]+\/[0-9]+/
+        $contract_addr = /0x[a-fA-F0-9]{40}/
+        $ens_domain = /[a-zA-Z0-9-]+\.eth/
+        $ipfs_gateway = /ipfs\.io\/ipfs\/[A-Za-z0-9]+/
+        $nft_metadata = /"name":\s*"[^"]+",\s*"description":\s*"[^"]+",\s*"image":/
+        $smart_contract = /pragma solidity|contract.*{|function.*public/
+    condition:
+        any of them
+}
+
+rule Advanced_Obfuscation_Techniques {
+    meta:
+        description = "Detects advanced obfuscation techniques"
+        author = "Enhanced Scanner"
+    strings:
+        $unicode_escape = /\\u[0-9a-fA-F]{4}(\\u[0-9a-fA-F]{4}){10,}/
+        $rot13_like = /nopqrstuvwxyzabcdefghijklm/
+        $base32_long = /[A-Z2-7]{100,}={0,6}/
+        $base85_marker = /<~.*~>/
+        $hex_obfusc = /\\x[0-9a-fA-F]{2}(\\x[0-9a-fA-F]{2}){20,}/
+        $xor_pattern = /xor.*0x[0-9a-fA-F]+|[0-9a-fA-F]+.*xor/
+    condition:
+        any of them
+}
+
+rule Social_Engineering_Keywords {
+    meta:
+        description = "Detects social engineering keywords"
+        author = "Enhanced Scanner"
+    strings:
+        $urgent = /urgent.*action|immediate.*response|act.*now/
+        $verify = /verify.*account|confirm.*identity|update.*payment/
+        $security = /security.*alert|account.*suspended|unauthorized.*access/
+        $winner = /congratulations.*winner|you.*won|claim.*prize/
+        $covid = /covid.*relief|pandemic.*assistance|vaccine.*appointment/
+        $crypto_promise = /guaranteed.*profit|crypto.*investment|bitcoin.*returns/
+    condition:
+        any of them
+}
+
+rule Remote_Access_Tools {
+    meta:
+        description = "Detects remote access tool references"
+        author = "Enhanced Scanner"
+    strings:
+        $teamviewer = "teamviewer"
+        $anydesk = "anydesk"
+        $rdp_connect = /mstsc|remote.*desktop|rdp.*connect/
+        $vnc_connect = /vnc.*viewer|tightvnc|realvnc/
+        $ssh_tunnel = /ssh.*tunnel|putty.*tunnel/
+        $ngrok = "ngrok"
+        $reverse_shell = /reverse.*shell|shell.*reverse/
+    condition:
+        any of them
+}
+
+rule AI_Generated_Content_Markers {
+    meta:
+        description = "Detects AI-generated content markers"
+        author = "Enhanced Scanner"
+    strings:
+        $ai_disclaimer = /generated.*ai|ai.*generated|artificial.*intelligence.*created/
+        $deepfake = /deepfake|face.*swap|synthetic.*media/
+        $gpt_marker = /chatgpt|gpt-[0-9]|openai.*model/
+        $stable_diffusion = /stable.*diffusion|dall.*e|midjourney/
+        $synthetic_id = /synthetic.*identity|fake.*person|generated.*face/
+    condition:
+        any of them
+}
+
+rule Suspicious_Base64_Patterns {
+    meta:
+        description = "Detects suspicious base64 encoded content patterns"
+        author = "Enhanced Scanner"
+    strings:
+        $b64_powershell = /cG93ZXJzaGVsbA|cG93ZXJzaGVsb|UG93ZXJTaGVsbA/  // powershell variations
+        $b64_cmd = /Y21kLmV4ZQ|Y21k|Q21kLmV4ZQ/  // cmd.exe variations
+        $b64_wget = /d2dldA|V2dldA|d2VnZXQ/  // wget variations
+        $b64_curl = /Y3VybA|Q3VybA|Y3VybC|Curl/  // curl variations
+        $b64_http = /aHR0cDovL|aHR0cHM6Ly|SFRUUDovL/  // http/https
+        $b64_invoke = /SW52b2tl|aW52b2tl|SU5WT0tF/  // Invoke variations
+    condition:
+        any of them
+}
+
+rule Polyglot_File_Indicators {
+    meta:
+        description = "Detects polyglot file indicators"
+        author = "Enhanced Scanner"
+    strings:
+        $pdf_in_image = "%PDF-"
+        $zip_in_image = { 50 4B 03 04 }
+        $html_in_image = "<html" nocase
+        $javascript_in_image = "<script" nocase
+        $xml_in_image = "<?xml" nocase
+        $svg_in_image = "<svg" nocase
+    condition:
+        any of them and (
+            uint16(0) == 0xD8FF or  // JPEG
+            uint32(0) == 0x474E5089 or  // PNG
+            uint32(0) == 0x38464947  // GIF
+        )
+}
