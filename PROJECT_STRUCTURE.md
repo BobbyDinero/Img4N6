@@ -4,7 +4,7 @@ This document outlines the complete file structure for the Image Threat Scanner 
 
 ## 📋 Repository Structure
 
-```
+```text
 image-threat-scanner/
 ├── 📄 README.md                     # Main project documentation
 ├── 📄 LICENSE                       # MIT License
@@ -229,7 +229,7 @@ When packaging for distribution, the structure should include:
 
 ### Minimal Distribution
 
-```
+```text
 image-threat-scanner/
 ├── src/                    # Core application files
 ├── templates/             # Web interface
@@ -285,4 +285,5 @@ Files that work together and should be updated in sync:
 - `README.md` ↔ `INSTALL.md` ↔ `CONTRIBUTING.md`
 - `Dockerfile` ↔ `docker-compose.yml` ↔ `requirements.txt`
 
-This structure follows GitHub best practices and provides a professional, maintainable codebase for the Image Threat Scanner project.
+This structure follows GitHub best practices and provides a professional, maintainable
+codebase for the Image Threat Scanner project.

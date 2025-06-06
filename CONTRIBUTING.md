@@ -1,6 +1,7 @@
 # Contributing to Image Threat Scanner
 
-Thank you for your interest in contributing to the Image Threat Scanner project! We welcome contributions from the community to help improve this security tool.
+Thank you for your interest in contributing to the Image Threat Scanner project!
+We welcome contributions from the community to help improve this security tool.
 
 ## 🚀 Getting Started
 

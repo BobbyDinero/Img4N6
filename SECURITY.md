@@ -11,7 +11,8 @@ We actively support the following versions of Image Threat Scanner with security
 
 ## 🚨 Reporting a Vulnerability
 
-We take security vulnerabilities seriously. If you discover a security vulnerability in Image Threat Scanner, please report it responsibly.
+We take security vulnerabilities seriously.  
+If you discover a security vulnerability in Image Threat Scanner, please report it responsibly.
 
 ### 📧 How to Report
 

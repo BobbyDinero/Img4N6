@@ -84,14 +84,14 @@ brew install python3
 
 #### 2. Download Project
 
-**Option 1: Git Clone (Recommended)**
+#### Option 1: Git Clone (Recommended)
 
 ```bash
 git clone https://github.com/yourusername/image-threat-scanner.git
 cd image-threat-scanner
 ```
 
-**Option 2: Download ZIP**
+#### Option 2: Download ZIP
 
 1. Go to the GitHub repository
 2. Click "Code" → "Download ZIP"
@@ -394,4 +394,4 @@ If you encounter issues not covered here:
 
 ---
 
-**Next Steps**: After successful installation, see the [Usage Guide](docs/USAGE.md) for detailed instructions on using the scanner.
+**Next Steps**: After successful installation, see the [Usage Guide](docs/USAGE.md) for detailed instructions.
