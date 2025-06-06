@@ -9,8 +9,8 @@ Complete installation instructions for the Image Threat Scanner.
 1. **Download the Project**
 
    ```cmd
-   git clone https://github.com/yourusername/image-threat-scanner.git
-   cd image-threat-scanner
+   git clone https://github.com/BobbyDinero/IMG4N6.git
+   cd ImgForensix
    ```
 
 2. **Run Automated Setup**
@@ -87,8 +87,8 @@ brew install python3
 #### Option 1: Git Clone (Recommended)
 
 ```bash
-git clone https://github.com/yourusername/image-threat-scanner.git
-cd image-threat-scanner
+git clone https://github.com/BobbyDinero/IMG4N6.git
+cd ImgForensix
 ```
 
 #### Option 2: Download ZIP
