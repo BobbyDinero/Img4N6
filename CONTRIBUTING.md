@@ -1,6 +1,6 @@
-# Contributing to Image Threat Scanner
+# Contributing to IMG🛡️4N6
 
-Thank you for your interest in contributing to the Image Threat Scanner project!
+Thank you for your interest in contributing to the IMG🛡️4N6 project!
 We welcome contributions from the community to help improve this security tool.
 
 ## 🚀 Getting Started

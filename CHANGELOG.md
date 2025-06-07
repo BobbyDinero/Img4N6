@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Image Threat Scanner project will be documented in this file.
+All notable changes to the IMG🛡️4N6 project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -147,7 +147,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Version 1.0.0 Highlights
 
-This is the first stable release of the Image Threat Scanner, featuring comprehensive forensic analysis capabilities designed for cybersecurity professionals and researchers. The application provides enterprise-grade threat detection while maintaining user-friendly operation through an intuitive web interface.
+This is the first stable release of the IMG🛡️4N6, featuring comprehensive forensic analysis capabilities designed for cybersecurity professionals and researchers. The application provides enterprise-grade threat detection while maintaining user-friendly operation through an intuitive web interface.
 
 **Key Achievements:**
 

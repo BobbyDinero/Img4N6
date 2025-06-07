@@ -1,6 +1,6 @@
 # 📁 Project Structure
 
-This document outlines the complete file structure for the Image Threat Scanner GitHub repository.
+This document outlines the complete file structure for the IMG🛡️4N6 GitHub repository.
 
 ## 📋 Repository Structure
 
@@ -286,4 +286,4 @@ Files that work together and should be updated in sync:
 - `Dockerfile` ↔ `docker-compose.yml` ↔ `requirements.txt`
 
 This structure follows GitHub best practices and provides a professional, maintainable
-codebase for the Image Threat Scanner project.
+codebase for the IMG🛡️4N6 project.

@@ -33,7 +33,7 @@ if errorlevel 1 (
     exit /b 1
 ) else (
     python --version
-    echo ✓ Python found
+    echo SUCCESS Python found
 )
 
 REM Get Python version and check if it's 3.8+
@@ -47,7 +47,7 @@ if errorlevel 1 (
     pause
     exit /b 1
 ) else (
-    echo ✓ Python version compatible
+    echo SUCCESS Python version compatible
 )
 
 REM Check if git is installed (optional)
@@ -57,13 +57,13 @@ if errorlevel 1 (
     echo ⚠ Git not found (optional for manual download)
 ) else (
     git --version
-    echo ✓ Git found
+    echo SUCCESS Git found
 )
 
 REM Create virtual environment
 echo [4/8] Creating virtual environment...
 if exist "venv\" (
-    echo ✓ Virtual environment already exists
+    echo SUCCESS Virtual environment already exists
 ) else (
     python -m venv venv
     if errorlevel 1 (
@@ -74,7 +74,7 @@ if exist "venv\" (
         pause
         exit /b 1
     ) else (
-        echo ✓ Virtual environment created
+        echo SUCCESS Virtual environment created
     )
 )
 
@@ -93,7 +93,7 @@ if errorlevel 1 (
     pause
     exit /b 1
 ) else (
-    echo ✓ Virtual environment activated
+    echo SUCCESS Virtual environment activated
 )
 
 REM Upgrade pip
@@ -102,7 +102,7 @@ python -m pip install --upgrade pip --quiet
 if errorlevel 1 (
     echo ⚠ Pip upgrade failed, continuing with existing version
 ) else (
-    echo ✓ Pip upgraded
+    echo SUCCESS Pip upgraded
 )
 
 REM Install requirements
@@ -124,7 +124,7 @@ if exist "requirements.txt" (
         echo You can still try to run the application...
         pause
     ) else (
-        echo ✓ All packages installed successfully
+        echo SUCCESS All packages installed successfully
     )
 ) else (
     echo WARNING: requirements.txt not found
@@ -135,7 +135,7 @@ if exist "requirements.txt" (
         pause
         exit /b 1
     ) else (
-        echo ✓ Basic packages installed
+        echo SUCCESS Basic packages installed
     )
 )
 
@@ -150,7 +150,7 @@ if not exist "uploads\" mkdir uploads
 if not exist "temp_sessions\" mkdir temp_sessions
 if not exist "logs\" mkdir logs
 if not exist "docs\" mkdir docs
-echo ✓ Directory structure created
+echo SUCCESS Directory structure created
 
 REM Check required files
 echo.
@@ -177,11 +177,11 @@ if not exist "rules.yar" (
 REM Test Python imports
 echo.
 echo Testing critical Python imports...
-python -c "import flask" 2>nul && echo ✓ Flask || echo ✗ Flask import failed
-python -c "import PIL" 2>nul && echo ✓ Pillow || echo ✗ Pillow import failed
-python -c "import cv2" 2>nul && echo ✓ OpenCV || echo ✗ OpenCV import failed
-python -c "import numpy" 2>nul && echo ✓ NumPy || echo ✗ NumPy import failed
-python -c "import scipy" 2>nul && echo ✓ SciPy || echo ✗ SciPy import failed
+python -c "import flask" 2>nul && echo SUCCESS Flask || echo ✗ Flask import failed
+python -c "import PIL" 2>nul && echo SUCCESS Pillow || echo ✗ Pillow import failed
+python -c "import cv2" 2>nul && echo SUCCESS OpenCV || echo ✗ OpenCV import failed
+python -c "import numpy" 2>nul && echo SUCCESS NumPy || echo ✗ NumPy import failed
+python -c "import scipy" 2>nul && echo SUCCESS SciPy || echo ✗ SciPy import failed
 
 echo.
 echo ===========================================
@@ -214,7 +214,7 @@ if /i "%createShortcut%"=="y" (
     echo @echo off > "%USERPROFILE%\Desktop\Image Threat Scanner.bat"
     echo cd /d "%CD%" >> "%USERPROFILE%\Desktop\Image Threat Scanner.bat"
     echo call run_app.bat >> "%USERPROFILE%\Desktop\Image Threat Scanner.bat"
-    echo ✓ Desktop shortcut created
+    echo SUCCESS Desktop shortcut created
 )
 
 echo.

@@ -2,7 +2,7 @@
 
 ## 🛡️ Supported Versions
 
-We actively support the following versions of Image Threat Scanner with security updates:
+We actively support the following versions of IMG🛡️4N6 with security updates:
 
 | Version | Supported          |
 | ------- | ------------------ |
@@ -12,7 +12,7 @@ We actively support the following versions of Image Threat Scanner with security
 ## 🚨 Reporting a Vulnerability
 
 We take security vulnerabilities seriously.  
-If you discover a security vulnerability in Image Threat Scanner, please report it responsibly.
+If you discover a security vulnerability in IMG🛡️4N6, please report it responsibly.
 
 ### 📧 How to Report
 
@@ -20,8 +20,8 @@ If you discover a security vulnerability in Image Threat Scanner, please report 
 
 Instead, please report security issues via email to:
 
-- **Email**: [your-security-email@domain.com]
-- **Subject**: `[SECURITY] Image Threat Scanner Vulnerability Report`
+- **Email**: [BobbyDinero1852@gmail.com]
+- **Subject**: `[SECURITY] IMG🛡️4N6 Vulnerability Report`
 
 ### 📋 What to Include
 
@@ -198,7 +198,7 @@ When appropriate, we will publish security advisories including:
 
 ## 📞 Contact Information
 
-- **Security Email**: [your-security-email@domain.com]
+- **Security Email**: [BobbyDinero1852@gmail.com]
 - **General Issues**: GitHub Issues (for non-security issues only)
 - **GPG Key**: [Link to public GPG key if available]
 
@@ -208,7 +208,6 @@ Stay informed about security updates:
 
 1. **GitHub Releases**: Watch the repository for release notifications
 2. **Security Advisories**: GitHub Security tab
-3. **Mailing List**: [If you have one]
 
 ## 📚 Additional Resources
 
@@ -219,6 +218,6 @@ Stay informed about security updates:
 
 ---
 
-**Last Updated**: January 2025
+**Last Updated**: June 2025
 
-Thank you for helping us keep Image Threat Scanner secure! 🙏
+Thank you for helping us keep IMG🛡️4N6 secure! 🙏

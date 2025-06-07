@@ -479,7 +479,9 @@ def detect_modern_threats(file_path):
 
 
 def detect_ai_generated_content(file_path):
-    """Comprehensive AI-generated image detection with probability scoring"""
+    """Enhanced AI-generated image detection - tuned for modern models like ComfyUI/Stable Diffusion"""
+    print(f"🔍 DEBUG: Starting enhanced AI detection for: {file_path}")
+
     findings = []
     ai_scores = {}
 
@@ -487,7 +489,7 @@ def detect_ai_generated_content(file_path):
         # Load image for analysis
         img = cv2.imread(file_path, cv2.IMREAD_COLOR)
         if img is None:
-            # Try with PIL as backup
+            print(f"❌ DEBUG: cv2.imread failed for {file_path}")
             try:
                 from PIL import Image
 
@@ -497,8 +499,12 @@ def detect_ai_generated_content(file_path):
                     img = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
                 else:
                     img = img_array
-            except:
+                print(f"✅ DEBUG: PIL backup worked for {file_path}")
+            except Exception as e:
+                print(f"❌ DEBUG: PIL also failed: {e}")
                 return findings, 0.0
+
+        print(f"📊 DEBUG: Image loaded successfully, shape: {img.shape}")
 
         # Convert to grayscale safely
         if len(img.shape) == 3:
@@ -507,104 +513,35 @@ def detect_ai_generated_content(file_path):
             img_gray = img
 
         h, w = img_gray.shape
+        print(f"📐 DEBUG: Image dimensions: {w}x{h}")
 
-        # === STATISTICAL FINGERPRINT ANALYSIS ===
+        # === ENHANCED AI DETECTION FOR MODERN MODELS ===
 
-        # 1. File-level entropy and randomness (strongest indicator)
-        try:
-            with open(file_path, "rb") as f:
-                file_data = f.read()
+        # 1. ComfyUI/Stable Diffusion specific indicators
+        filename = os.path.basename(file_path).lower()
+        print(f"📄 DEBUG: Filename: {filename}")
 
-            file_entropy = calculate_entropy(file_data)
-            is_random, chi_stat = chi_square_test(file_data)
+        # Strong filename indicators
+        comfyui_patterns = [
+            "comfyui",
+            "comfy_ui",
+            "stable_diffusion",
+            "sd_",
+            "flux_",
+            "dalle",
+        ]
+        if any(pattern in filename for pattern in comfyui_patterns):
+            ai_scores["ai_filename"] = 0.40  # Very strong indicator
+            print(f"🎯 DEBUG: AI filename pattern detected: +0.40")
 
-            # High file entropy is a strong AI indicator
-            if file_entropy > 7.5:
-                ai_scores["high_file_entropy"] = (
-                    min((file_entropy - 7.5) / 0.5, 1.0) * 0.25
-                )
+        # Sequential naming pattern (common in AI generation)
+        import re
 
-            # Combination of high entropy + randomness = very strong AI signature
-            if file_entropy > 7.8 and is_random:
-                ai_scores["entropy_plus_random"] = 0.20
-            elif is_random:
-                ai_scores["random_distribution"] = 0.10
+        if re.search(r"_\d{5}_", filename) or re.search(r"_\d{4}_", filename):
+            ai_scores["sequential_naming"] = 0.25
+            print(f"🔢 DEBUG: Sequential naming pattern: +0.25")
 
-        except Exception as e:
-            pass
-
-        # 2. Pixel-level entropy analysis
-        try:
-            pixel_entropy = calculate_entropy(img_gray.flatten())
-            if pixel_entropy > 7.0:
-                ai_scores["high_pixel_entropy"] = (
-                    min((pixel_entropy - 7.0) / 1.0, 1.0) * 0.12
-                )
-        except:
-            pass
-
-        # 3. Statistical moments analysis
-        try:
-            pixel_kurtosis = stats.kurtosis(img_gray.flatten())
-            pixel_skew = stats.skew(img_gray.flatten())
-
-            # AI images often have extreme statistical moments
-            if abs(pixel_kurtosis) > 0.5:
-                ai_scores["pixel_kurtosis"] = min(abs(pixel_kurtosis) / 3.0, 1.0) * 0.15
-
-            if abs(pixel_skew) > 1.0:
-                ai_scores["pixel_skew"] = min(abs(pixel_skew) / 4.0, 1.0) * 0.12
-
-        except Exception as e:
-            pass
-
-        # 4. Gradient analysis
-        try:
-            grad_x = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=3)
-            grad_y = cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=3)
-            gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
-
-            grad_skew = stats.skew(gradient_magnitude.flatten())
-            grad_kurtosis = stats.kurtosis(gradient_magnitude.flatten())
-
-            if abs(grad_skew) > 2.0:
-                ai_scores["gradient_skew"] = min(abs(grad_skew) / 8.0, 1.0) * 0.10
-            if abs(grad_kurtosis) > 10.0:
-                ai_scores["gradient_kurtosis"] = (
-                    min(abs(grad_kurtosis) / 25.0, 1.0) * 0.10
-                )
-
-        except Exception as e:
-            pass
-
-        # 5. Color channel correlation (for color images)
-        try:
-            if len(img.shape) == 3 and img.shape[2] >= 3:
-                r_channel = img[:, :, 2].flatten()
-                g_channel = img[:, :, 1].flatten()
-                b_channel = img[:, :, 0].flatten()
-
-                # Calculate cross-correlations
-                rg_corr = np.corrcoef(r_channel, g_channel)[0, 1]
-                rb_corr = np.corrcoef(r_channel, b_channel)[0, 1]
-                gb_corr = np.corrcoef(g_channel, b_channel)[0, 1]
-
-                # Filter out NaN correlations
-                correlations = [
-                    c for c in [rg_corr, rb_corr, gb_corr] if not np.isnan(c)
-                ]
-                if correlations:
-                    avg_correlation = np.mean([abs(c) for c in correlations])
-
-                    # Natural images have higher channel correlation
-                    if avg_correlation < 0.75:
-                        ai_scores["channel_independence"] = (
-                            (0.75 - avg_correlation) / 0.75 * 0.12
-                        )
-        except Exception as e:
-            pass
-
-        # 6. Missing camera metadata (strong indicator for AI)
+        # 2. Missing camera metadata (ENHANCED - now much stronger for AI)
         try:
             from PIL import Image
 
@@ -612,6 +549,9 @@ def detect_ai_generated_content(file_path):
             exif_data = pil_img._getexif()
 
             has_camera_info = False
+            camera_make = None
+            camera_model = None
+
             if exif_data:
                 camera_tags = [
                     271,
@@ -621,115 +561,270 @@ def detect_ai_generated_content(file_path):
                     36868,
                 ]  # Make, Model, DateTime, etc.
                 has_camera_info = any(tag in exif_data for tag in camera_tags)
+                camera_make = exif_data.get(271, "")
+                camera_model = exif_data.get(272, "")
+                print(
+                    f"📷 DEBUG: Camera metadata - Make: '{camera_make}', Model: '{camera_model}'"
+                )
 
             if not has_camera_info:
-                ai_scores["missing_metadata"] = 0.18  # Strong weight
-        except Exception as e:
-            ai_scores["missing_metadata"] = 0.18  # Assume missing if can't read
+                ai_scores["missing_camera_metadata"] = 0.35  # Increased weight
+                print(f"🚨 DEBUG: No camera metadata: +0.35")
+            elif camera_make and any(
+                ai_tool in camera_make.lower()
+                for ai_tool in ["comfyui", "stable", "diffusion", "ai"]
+            ):
+                ai_scores["ai_metadata"] = 0.45  # AI tool in metadata
+                print(f"🤖 DEBUG: AI tool in metadata: +0.45")
 
-        # 7. Edge density analysis
+        except Exception as e:
+            print(f"❌ DEBUG: Metadata check failed: {e}")
+            ai_scores["missing_camera_metadata"] = 0.35  # Assume missing
+
+        # 3. File entropy analysis (TUNED FOR PNG)
+        try:
+            with open(file_path, "rb") as f:
+                file_data = f.read()
+
+            file_entropy = calculate_entropy(file_data)
+            is_random, chi_stat = chi_square_test(file_data)
+
+            print(f"📈 DEBUG: File entropy: {file_entropy:.3f}")
+            print(f"🎲 DEBUG: Chi-square random: {is_random}, stat: {chi_stat:.2f}")
+
+            # PNG files from AI generators have specific entropy patterns
+            file_ext = os.path.splitext(file_path)[1].lower()
+            if file_ext == ".png":
+                # PNG from AI tools typically has high entropy but specific range
+                if 7.6 <= file_entropy <= 7.99:
+                    ai_scores["ai_png_entropy"] = 0.25
+                    print(f"🎯 DEBUG: AI-typical PNG entropy: +0.25")
+                elif file_entropy > 7.99:
+                    ai_scores["very_high_entropy"] = 0.30
+                    print(f"🚨 DEBUG: Very high entropy (AI compression): +0.30")
+
+            # Combination of high entropy + randomness
+            if file_entropy > 7.7 and is_random:
+                ai_scores["entropy_plus_random"] = 0.20
+                print(f"🚨 DEBUG: High entropy + random: +0.20")
+
+        except Exception as e:
+            print(f"❌ DEBUG: File entropy analysis failed: {e}")
+
+        # 4. ENHANCED pixel-level analysis for AI artifacts
+        try:
+            pixel_entropy = calculate_entropy(img_gray.flatten())
+            print(f"🖼️ DEBUG: Pixel entropy: {pixel_entropy:.3f}")
+
+            # AI images often have very specific pixel entropy ranges
+            if 7.3 <= pixel_entropy <= 7.8:
+                ai_scores["ai_pixel_patterns"] = 0.20
+                print(f"🎯 DEBUG: AI-typical pixel entropy: +0.20")
+
+        except Exception as e:
+            print(f"❌ DEBUG: Pixel entropy failed: {e}")
+
+        # 5. AI-specific color distribution analysis
+        try:
+            if len(img.shape) == 3 and img.shape[2] >= 3:
+                # Analyze color channel statistics
+                r_channel = img[:, :, 2].flatten()
+                g_channel = img[:, :, 1].flatten()
+                b_channel = img[:, :, 0].flatten()
+
+                # AI images often have very specific color distributions
+                r_std = np.std(r_channel)
+                g_std = np.std(g_channel)
+                b_std = np.std(b_channel)
+
+                print(
+                    f"🎨 DEBUG: Color std - R:{r_std:.2f}, G:{g_std:.2f}, B:{b_std:.2f}"
+                )
+
+                # AI generated images often have very similar std dev across channels
+                channel_stds = [r_std, g_std, b_std]
+                std_variance = np.var(channel_stds)
+
+                if std_variance < 10:  # Very similar std dev across channels
+                    ai_scores["uniform_color_distribution"] = 0.15
+                    print(f"🎯 DEBUG: Uniform color distribution (AI): +0.15")
+
+                # Check for AI-typical value distributions
+                for i, (channel, name) in enumerate(
+                    [(r_channel, "R"), (g_channel, "G"), (b_channel, "B")]
+                ):
+                    # AI often creates specific histogram patterns
+                    hist, _ = np.histogram(channel, bins=256, range=(0, 256))
+
+                    # Look for artificial peaks/gaps common in AI
+                    peaks = len(
+                        [
+                            i
+                            for i in range(1, 255)
+                            if hist[i] > hist[i - 1]
+                            and hist[i] > hist[i + 1]
+                            and hist[i] > np.mean(hist) * 2
+                        ]
+                    )
+                    if peaks > 15:  # Too many artificial peaks
+                        ai_scores[f"artificial_{name.lower()}_peaks"] = 0.08
+                        print(f"🔺 DEBUG: Artificial {name} channel peaks: +0.08")
+
+        except Exception as e:
+            print(f"❌ DEBUG: Color analysis failed: {e}")
+
+        # 6. ENHANCED edge analysis for AI signatures
         try:
             edges = cv2.Canny(img_gray, 50, 150)
             edge_density = np.sum(edges > 0) / (h * w)
+            print(f"📏 DEBUG: Edge density: {edge_density:.4f}")
 
-            # AI images often have unusual edge densities
-            if edge_density > 0.12 or edge_density < 0.03:
-                if edge_density > 0.12:
-                    ai_scores["edge_inconsistency"] = (
-                        min((edge_density - 0.12) / 0.08, 1.0) * 0.08
-                    )
-                else:
-                    ai_scores["edge_inconsistency"] = (
-                        (0.03 - edge_density) / 0.03 * 0.08
-                    )
+            # AI images often have very specific edge characteristics
+            if 0.08 <= edge_density <= 0.25:  # AI-typical edge density
+                ai_scores["ai_edge_density"] = 0.15
+                print(f"🎯 DEBUG: AI-typical edge density: +0.15")
+
+            # Analyze edge distribution patterns
+            edge_hist = np.sum(edges, axis=0)
+            edge_variance = np.var(edge_hist)
+            if (
+                edge_variance < np.mean(edge_hist) * 50
+            ):  # Very uniform edge distribution
+                ai_scores["uniform_edge_distribution"] = 0.12
+                print(f"📊 DEBUG: Uniform edge distribution (AI): +0.12")
+
         except Exception as e:
-            pass
+            print(f"❌ DEBUG: Edge analysis failed: {e}")
 
-        # 8. Block artifact detection (VAE signatures)
+        # 7. Resolution and dimension analysis
         try:
-            block_artifacts = 0
-            total_blocks = 0
-            kernel_size = 8
+            # AI tools often generate at specific resolutions
+            common_ai_resolutions = [
+                (512, 512),
+                (1024, 1024),
+                (768, 768),
+                (896, 896),
+                (512, 768),
+                (768, 512),
+                (1024, 768),
+                (768, 1024),
+                (1152, 896),
+                (896, 1152),
+            ]
 
-            for i in range(0, h - kernel_size, kernel_size):
-                for j in range(0, w - kernel_size, kernel_size):
-                    block = img_gray[i : i + kernel_size, j : j + kernel_size]
-                    total_blocks += 1
+            if (w, h) in common_ai_resolutions or (h, w) in common_ai_resolutions:
+                ai_scores["ai_resolution"] = 0.20
+                print(f"🎯 DEBUG: Common AI resolution {w}x{h}: +0.20")
 
-                    unique_values = len(np.unique(block))
-                    if unique_values < 25:  # VAE quantization artifacts
-                        block_artifacts += 1
+            # Check if dimensions are multiples of 64 (common in AI)
+            if w % 64 == 0 and h % 64 == 0:
+                ai_scores["ai_dimension_multiple"] = 0.15
+                print(f"🔢 DEBUG: Dimensions multiple of 64: +0.15")
 
-            if total_blocks > 0:
-                artifact_ratio = block_artifacts / total_blocks
-                if artifact_ratio > 0.05:
-                    ai_scores["vae_artifacts"] = min(artifact_ratio / 0.2, 1.0) * 0.10
         except Exception as e:
-            pass
+            print(f"❌ DEBUG: Resolution analysis failed: {e}")
 
-        # === CALCULATE TOTAL PROBABILITY ===
+        # 8. File size to quality ratio analysis
+        try:
+            file_size = os.path.getsize(file_path)
+            pixels = w * h
+            size_per_pixel = file_size / pixels if pixels > 0 else 0
 
+            print(
+                f"📊 DEBUG: File size: {file_size}, Pixels: {pixels}, Size/pixel: {size_per_pixel:.2f}"
+            )
+
+            # AI PNG files often have specific compression characteristics
+            if file_ext == ".png" and 0.5 <= size_per_pixel <= 2.0:
+                ai_scores["ai_compression_ratio"] = 0.12
+                print(f"🗜️ DEBUG: AI-typical compression ratio: +0.12")
+
+        except Exception as e:
+            print(f"❌ DEBUG: File size analysis failed: {e}")
+
+        # === CALCULATE ENHANCED TOTAL PROBABILITY ===
         total_score = sum(ai_scores.values())
+
+        # Apply bonus multiplier for multiple strong indicators
+        strong_indicators = sum(1 for score in ai_scores.values() if score >= 0.25)
+        if strong_indicators >= 2:
+            bonus_multiplier = 1.2
+            total_score *= bonus_multiplier
+            print(f"🚀 DEBUG: Multiple strong indicators bonus: x{bonus_multiplier}")
+
         ai_probability = min(total_score, 1.0)
+
+        print(f"🎯 DEBUG: AI scores breakdown: {ai_scores}")
+        print(
+            f"🎯 DEBUG: Total AI probability: {ai_probability:.3f} ({ai_probability*100:.1f}%)"
+        )
 
         # Generate findings based on detection
         if ai_probability > 0.05:  # Low threshold
             confidence_level = "LOW"
-            if ai_probability > 0.25:
+            if ai_probability > 0.3:
                 confidence_level = "MEDIUM"
-            if ai_probability > 0.5:
+            if ai_probability > 0.6:
                 confidence_level = "HIGH"
-            if ai_probability > 0.75:
+            if ai_probability > 0.8:
                 confidence_level = "VERY HIGH"
 
             findings.append(
                 f"AI-generated content detected (Confidence: {confidence_level}, Score: {ai_probability:.2f})"
             )
+            print(f"✅ DEBUG: AI detection positive with {confidence_level} confidence")
 
             # Report top contributing factors
             sorted_scores = sorted(ai_scores.items(), key=lambda x: x[1], reverse=True)
-            top_indicators = sorted_scores[:4]
+            top_indicators = sorted_scores[:6]  # Show more indicators
 
             indicator_names = {
-                "high_file_entropy": "High file entropy",
+                "ai_filename": "AI tool filename pattern",
+                "sequential_naming": "Sequential AI naming",
+                "missing_camera_metadata": "Missing camera metadata",
+                "ai_metadata": "AI tool in metadata",
+                "ai_png_entropy": "AI-typical PNG entropy",
+                "very_high_entropy": "Very high file entropy",
                 "entropy_plus_random": "High entropy + randomness",
-                "random_distribution": "Random data distribution",
-                "high_pixel_entropy": "High pixel entropy",
-                "pixel_kurtosis": "Abnormal pixel kurtosis",
-                "pixel_skew": "Abnormal pixel skewness",
-                "gradient_skew": "Abnormal gradient distribution",
-                "gradient_kurtosis": "Extreme gradient kurtosis",
-                "channel_independence": "Independent color channels",
-                "missing_metadata": "Missing camera metadata",
-                "edge_inconsistency": "Inconsistent edge patterns",
-                "vae_artifacts": "VAE decoder artifacts",
+                "ai_pixel_patterns": "AI pixel patterns",
+                "uniform_color_distribution": "Uniform color distribution",
+                "artificial_r_peaks": "Artificial red channel peaks",
+                "artificial_g_peaks": "Artificial green channel peaks",
+                "artificial_b_peaks": "Artificial blue channel peaks",
+                "ai_edge_density": "AI-typical edge density",
+                "uniform_edge_distribution": "Uniform edge distribution",
+                "ai_resolution": "Common AI resolution",
+                "ai_dimension_multiple": "AI dimension multiple",
+                "ai_compression_ratio": "AI compression signature",
             }
 
             for indicator, score in top_indicators:
-                if score > 0.03:
+                if score > 0.05:
                     indicator_name = indicator_names.get(indicator, indicator)
                     findings.append(f"  └─ {indicator_name}: {score:.2f}")
+                    print(f"📋 DEBUG: Indicator - {indicator_name}: {score:.2f}")
 
-            # Suggest generation method
-            if ai_scores.get("vae_artifacts", 0) > 0.05:
+            # Enhanced generation method prediction
+            if ai_scores.get("ai_filename", 0) > 0.2:
+                findings.append("  └─ Likely generated by: ComfyUI/Stable Diffusion")
+            elif ai_scores.get("ai_resolution", 0) > 0.1:
                 findings.append(
-                    "  └─ Likely generated by: Diffusion model (Stable Diffusion/FLUX)"
+                    "  └─ Likely generated by: Diffusion model (SD/FLUX/DALL-E)"
                 )
-            elif ai_scores.get("entropy_plus_random", 0) > 0.1:
+            elif total_score > 0.6:
                 findings.append("  └─ Likely generated by: Advanced AI model")
-            elif total_score > 0.4:
-                findings.append(
-                    "  └─ Likely generated by: Neural network-based generator"
-                )
+
+        else:
+            print(f"❌ DEBUG: AI probability too low: {ai_probability:.3f}")
 
         return findings, ai_probability
 
     except Exception as e:
-        # Return basic score based on missing metadata if everything else fails
+        print(f"❌ DEBUG: Major exception in AI detection: {str(e)}")
+        import traceback
+
+        traceback.print_exc()
         return [f"AI detection error: {str(e)}"], 0.0
-
-
-# === EXISTING FUNCTIONS (keeping all your original functions) ===
 
 
 def extract_exif_data(file_path):

@@ -1,6 +1,6 @@
 # Installation Guide
 
-Complete installation instructions for the Image Threat Scanner.
+Complete installation instructions for the IMG🛡️4N6.
 
 ## 🎯 Quick Install (Recommended)
 
@@ -189,7 +189,7 @@ flask run --host=127.0.0.1 --port=5000
 
 1. Open web browser
 2. Navigate to: `http://127.0.0.1:5000`
-3. You should see the Image Threat Scanner dashboard
+3. You should see the IMG🛡️4N6 dashboard
 
 ## 🔧 Advanced Configuration
 
