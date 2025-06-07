@@ -422,7 +422,7 @@ AI detection capabilities are for forensic analysis and should not be used for c
 
 ## 📞 Support
 
-- 📧 Email: <your-email@domain.com>
+- 📧 Email: <BobbyDinero1852@gmail.com>
 - 💬 Discussions: [GitHub Discussions](https://github.com/BobbyDinero/IMG4N6/discussions)
 - 🐛 Bug Reports: [GitHub Issues](https://github.com/BobbyDinero/IMG4N6/issues)
 
