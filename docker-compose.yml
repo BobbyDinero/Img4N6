@@ -1,0 +1,21 @@
+services:
+  img4n6:
+    build: .
+    container_name: img4n6-scanner
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./scan-data:/app/scan-data:ro   # mount the folder you want to scan (read-only)
+      - ./data:/app/data                # persisted SQLite history/cache
+    environment:
+      - FLASK_DEBUG=0
+      - IMG4N6_HOST=0.0.0.0
+      - IMG4N6_ALLOWED_DRIVES=/app
+      - IMG4N6_DB=/app/data/scan_history.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

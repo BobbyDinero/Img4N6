@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IMG4N6 - Image Threat Scanner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+    <!-- Leaflet for GPS map (loaded lazily only when geotagged photos exist) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  </head>
+  <body>
+    <div class="matrix-bg" id="matrixBg"></div>
+
+    <div class="container">
+      <header class="header">
+        <h1>IMG&#128737;&#65039;4N6</h1>
+        <h2>IMAGE THREAT SCANNER</h2>
+        <p>Advanced Forensic Analysis &amp; Steganography Detection System</p>
+        <div class="feature-badges">
+          <span class="badge threat-badge">&#128737;&#65039; Modern Threats</span>
+          <span class="badge forensic-badge">&#128300; Forensic Grade</span>
+          <span class="badge forensic-badge">&#129302; AI Provenance</span>
+        </div>
+      </header>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="totalScans">0</div><div class="stat-label">Files Scanned</div></div>
+        <div class="stat-card ai-stat"><div class="stat-value" id="aiDetected">0</div><div class="stat-label">AI Images</div></div>
+        <div class="stat-card"><div class="stat-value" id="threatsFound">0</div><div class="stat-label">Threats</div></div>
+        <div class="stat-card"><div class="stat-value" id="modernThreats">0</div><div class="stat-label">Duplicates</div></div>
+        <div class="stat-card"><div class="stat-value" id="cleanFiles">0</div><div class="stat-label">Clean</div></div>
+        <div class="stat-card"><div class="stat-value" id="detectionRate">0%</div><div class="stat-label">Flag Rate</div></div>
+      </div>
+
+      <div class="main-content">
+        <div class="panel">
+          <h3>&#128193; Scan Configuration</h3>
+
+          <div class="analysis-options">
+            <div class="option-card selected" data-level="quick">
+              <div style="font-weight: bold; color: #00ff88">&#9889; Quick</div>
+              <div style="font-size: 0.85rem; margin-top: 5px">AI provenance + YARA + structure + metadata</div>
+            </div>
+            <div class="option-card" data-level="deep">
+              <div style="font-weight: bold; color: #ffaa00">&#128269; Deep</div>
+              <div style="font-size: 0.85rem; margin-top: 5px">+ ELA tamper + LSB stego + statistics</div>
+            </div>
+            <div class="option-card" data-level="ultra">
+              <div style="font-weight: bold; color: #ff4444">&#128640; Ultra</div>
+              <div style="font-size: 0.85rem; margin-top: 5px">+ Sample-Pair analysis + palette stego</div>
+            </div>
+          </div>
+
+          <div class="vt-config">
+            <label style="display:block;margin-bottom:5px;color:#ccc;font-size:0.9rem">
+              &#127760; VirusTotal API Key (optional &mdash; only flagged files are looked up):
+            </label>
+            <input type="password" id="vtApiKey" placeholder="Enter VirusTotal API key" />
+          </div>
+
+          <div class="scan-area" id="scanArea">
+            <div style="font-size: 3rem; margin-bottom: 15px">&#128193;</div>
+            <div style="font-size: 1.2rem; margin-bottom: 10px">Enter folder path to scan</div>
+            <input type="text" id="folderPath" placeholder="C:\Users\YourName\Pictures"
+                   style="width:85%;padding:10px;background:rgba(0,0,0,0.3);border:1px solid rgba(0,255,136,0.3);border-radius:5px;color:#fff;font-size:0.9rem;margin-bottom:15px" />
+            <div style="display:flex;gap:10px;justify-content:center;margin-bottom:10px">
+              <button id="validatePathBtn" class="upload-option-btn">&#9989; Validate Path</button>
+            </div>
+            <div id="pathValidation" style="margin-top:10px;font-size:0.9rem"></div>
+          </div>
+
+          <div class="progress-bar" id="progressBar" style="display:none">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="loading" id="loading" style="display:none">
+            <div class="spinner"></div>
+            <div id="loadingText">Analyzing images...</div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <button class="scan-button" id="scanButton" disabled style="flex:2">&#128269; Start Analysis</button>
+            <button class="scan-button" id="cancelButton" style="flex:1;display:none;background:#7a2222">&#9209; Cancel</button>
+          </div>
+
+          <div id="historyBox" style="margin-top:20px"></div>
+        </div>
+
+        <div class="panel">
+          <h3>&#128202; Analysis Results</h3>
+          <div class="detection-summary" id="detectionSummary" style="display:none">
+            <div class="summary-item"><span class="summary-icon">&#129302;</span><span class="summary-text">AI: <span id="aiSummary">0</span></span></div>
+            <div class="summary-item"><span class="summary-icon">&#128737;&#65039;</span><span class="summary-text">Threats: <span id="threatSummary">0</span></span></div>
+            <div class="summary-item"><span class="summary-icon">&#128203;</span><span class="summary-text">Dupes: <span id="modernSummary">0</span></span></div>
+            <div class="summary-item"><span class="summary-icon">&#9989;</span><span class="summary-text">Clean: <span id="cleanSummary">0</span></span></div>
+          </div>
+
+          <div id="exportBar" style="display:none;margin:10px 0;gap:8px">
+            <span style="color:#888;font-size:0.85rem;margin-right:5px">Export report:</span>
+            <button class="upload-option-btn export-btn" data-fmt="html">&#128196; HTML</button>
+            <button class="upload-option-btn export-btn" data-fmt="csv">&#128202; CSV</button>
+            <button class="upload-option-btn export-btn" data-fmt="json">&#128190; JSON</button>
+          </div>
+
+          <div id="mapContainer" style="display:none;height:260px;border-radius:8px;overflow:hidden;margin-bottom:12px"></div>
+          <div id="duplicatesBox"></div>
+
+          <div class="results-area" id="resultsArea">
+            <div style="text-align:center;color:#888;margin-top:50px">
+              <div style="font-size:2rem;margin-bottom:10px">&#128373;&#65039;</div>
+              <div>Enter a folder path to begin forensic analysis</div>
+              <div style="font-size:0.85rem;margin-top:10px;color:#666">
+                AI provenance &bull; ELA tamper detection &bull; steganalysis &bull; GPS &bull; duplicates
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <p>&#129302; AI Provenance Extraction &bull; &#128300; ELA &amp; Steganalysis &bull; &#128737;&#65039; Modern Threat Intelligence</p>
+        <div class="footer-badges">
+          <span class="footer-badge">ComfyUI/A1111/C2PA</span>
+          <span class="footer-badge">Polyglot &amp; Stego</span>
+          <span class="footer-badge">Duplicate Detection</span>
+        </div>
+      </footer>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  </body>
+</html>

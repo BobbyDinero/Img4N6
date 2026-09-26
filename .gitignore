@@ -1,0 +1,46 @@
+
+# Python virtual environments
+venv/
+.venv/
+env/
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local databases and runtime files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.log
+
+# Temporary files and backups
+*.tmp
+*.bak
+*.zip
+
+# IDE and editor settings
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files and backups
+*.tmp
+*.bak
+*.zip
